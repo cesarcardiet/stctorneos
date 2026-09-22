@@ -4,6 +4,17 @@ function closeWorkspaceModals() {
     document.querySelectorAll('[data-ws-modal]').forEach((modal) => {
         modal.hidden = true;
     });
+
+    const frame = document.querySelector('[data-ws-doc-preview-frame]');
+    if (frame) {
+        frame.removeAttribute('src');
+        frame.hidden = true;
+    }
+    const image = document.querySelector('[data-ws-doc-preview-image]');
+    if (image) {
+        image.removeAttribute('src');
+        image.hidden = true;
+    }
 }
 
 function openWorkspaceModal(id) {
@@ -39,21 +50,53 @@ document.addEventListener('click', (event) => {
     const preview = event.target.closest('[data-ws-doc-preview]');
     if (preview) {
         event.preventDefault();
-        const src = preview.getAttribute('data-preview-src');
+        const src = preview.getAttribute('data-preview-src') || preview.getAttribute('href');
         const title = preview.getAttribute('data-preview-title') || 'Vista previa';
+        const kind = preview.getAttribute('data-preview-kind')
+            || (/\.(png|jpe?g|webp|gif)(\?|$)/i.test(src || '') ? 'image' : 'file');
         const modal = document.querySelector('[data-ws-modal="doc-preview"]');
         const image = modal?.querySelector('[data-ws-doc-preview-image]');
+        const frame = modal?.querySelector('[data-ws-doc-preview-frame]');
+        const empty = modal?.querySelector('[data-ws-doc-preview-empty]');
+        const openLink = modal?.querySelector('[data-ws-doc-preview-open]');
         const titleEl = modal?.querySelector('[data-ws-doc-preview-title]');
 
-        if (modal && image && src) {
-            image.src = src;
-            image.alt = title;
-            if (titleEl) {
-                titleEl.textContent = title;
-            }
-            openWorkspaceModal('doc-preview');
+        if (!modal || !src) {
+            return;
         }
 
+        if (titleEl) {
+            titleEl.textContent = title;
+        }
+
+        if (image) {
+            image.hidden = true;
+            image.removeAttribute('src');
+        }
+        if (frame) {
+            frame.hidden = true;
+            frame.removeAttribute('src');
+        }
+        if (empty) {
+            empty.hidden = true;
+        }
+        if (openLink) {
+            openLink.href = src;
+            openLink.hidden = false;
+        }
+
+        if (kind === 'image' && image) {
+            image.src = src;
+            image.alt = title;
+            image.hidden = false;
+        } else if (frame) {
+            frame.src = src;
+            frame.hidden = false;
+        } else if (empty) {
+            empty.hidden = false;
+        }
+
+        openWorkspaceModal('doc-preview');
         return;
     }
 

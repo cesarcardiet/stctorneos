@@ -8,44 +8,90 @@
 >
     <p class="ws-back"><a href="{{ route('workspace.categories.settings', $category) }}">← Configuración</a></p>
 
-    <div data-live-filter>
-        @include('workspace.partials.live-search', [
-            'placeholder' => 'Buscar jugador, documento o equipo…',
-            'empty' => 'No hay documentos con esa búsqueda.',
-        ])
-        <div class="ws-list">
-            @forelse ($documents as $document)
-                <div
-                    class="ws-list-row"
-                    data-live-item
-                    data-search="{{ $document->player?->fullName() }} {{ $document->type }} {{ $document->player?->team?->name }} {{ $document->statusLabel() }}"
+    <section class="ws-docs-page">
+        <form class="ws-docs-toolbar" method="get" action="{{ route('workspace.categories.documents', $category) }}">
+            <label class="ws-docs-search">
+                <span>Buscar</span>
+                <input
+                    type="search"
+                    name="search"
+                    value="{{ $filters['search'] }}"
+                    placeholder="Jugador, documento o equipo…"
+                    autocomplete="off"
                 >
-                @if ($document->isImage() && $document->fileUrl())
-                    <a class="ws-doc-thumb" href="{{ $document->fileUrl() }}" target="_blank" rel="noopener">
-                        <img src="{{ $document->fileUrl() }}" alt="{{ $document->type }}">
-                    </a>
-                @endif
-                <div>
-                    <strong>{{ $document->player?->fullName() }}</strong>
-                    <span>{{ $document->type }} · {{ $document->player?->team?->name }} · {{ $document->statusLabel() }}</span>
-                </div>
-                <span class="ws-row-actions">
-                    @if ($document->fileUrl())
-                        <a href="{{ $document->fileUrl() }}" target="_blank" rel="noopener">Ver</a>
-                    @endif
-                    @if ($canEdit && ! \App\Models\PlayerDocument::requiresClubReviewForType($document->type))
-                        <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="status" value="{{ $document->status === 'approved' ? 'observed' : 'approved' }}">
-                            <button type="submit" class="ws-btn ghost">{{ $document->status === 'approved' ? 'Observar' : 'Aprobar' }}</button>
-                        </form>
-                    @endif
-                </span>
-            </div>
-        @empty
-            <div class="ws-empty">No hay documentos en esta categoría.</div>
-        @endforelse
+            </label>
+            <label class="ws-docs-filter">
+                <span>Estado</span>
+                <select name="status">
+                    <option value="all" @selected($filters['status'] === 'all')>Todos</option>
+                    <option value="review" @selected($filters['status'] === 'review')>Pendientes / observados</option>
+                    @foreach (\App\Models\PlayerDocument::statusLabels() as $value => $label)
+                        <option value="{{ $value }}" @selected($filters['status'] === $value)>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </label>
+            <button type="submit" class="ws-btn">Filtrar</button>
+            <a class="ws-btn ghost" href="{{ route('workspace.categories.documents', $category) }}">Limpiar</a>
+        </form>
+
+        <p class="ws-muted ws-docs-hint">Un jugador por fila. Abrí la ficha, mirá cada documento en el modal y recién ahí aprobá.</p>
+
+        <div class="ws-docs-players">
+            @forelse ($players as $player)
+                @php
+                    $docs = collect(\App\Models\Player::documentTypes())
+                        ->map(fn (string $type) => $player->documentByType($type))
+                        ->filter();
+                    $pendingCount = $docs->whereIn('status', ['pending', 'observed'])->count();
+                @endphp
+                <details class="ws-docs-player" @if ($pendingCount > 0) open @endif>
+                    <summary class="ws-docs-player-summary">
+                        <img src="{{ $player->listPhotoUrl() }}" alt="">
+                        <div class="ws-docs-player-copy">
+                            <strong>{{ $player->fullName() }}</strong>
+                            <span>{{ $player->team?->name ?? 'Sin equipo' }} · {{ $player->documentationSummary() }}</span>
+                        </div>
+                        <span class="ws-docs-player-meta">
+                            @if ($pendingCount > 0)
+                                <span class="ws-status-pill is-warn">{{ $pendingCount }} por revisar</span>
+                            @else
+                                <span class="ws-status-pill is-ok">Al día</span>
+                            @endif
+                            <span class="ws-docs-chevron" aria-hidden="true">▾</span>
+                        </span>
+                    </summary>
+
+                    <ul class="ws-doc-list ws-docs-player-docs">
+                        @foreach (\App\Models\Player::documentTypes() as $type)
+                            @include('workspace.partials.player-doc-row', [
+                                'player' => $player,
+                                'category' => $category,
+                                'type' => $type,
+                                'label' => $type,
+                                'document' => $player->documentByType($type),
+                                'allowUpload' => false,
+                                'allowReview' => $canEdit,
+                                'canEdit' => $canEdit,
+                            ])
+                        @endforeach
+                    </ul>
+
+                    <footer class="ws-docs-player-foot">
+                        <a class="ws-btn ghost" href="{{ route('workspace.categories.players.show', [$category, $player]) }}">Ver ficha</a>
+                        @if ($canEdit)
+                            <a class="ws-btn ghost" href="{{ route('workspace.categories.players.edit', [$category, $player]) }}">Editar jugador</a>
+                        @endif
+                    </footer>
+                </details>
+            @empty
+                <div class="ws-empty">No hay jugadores con documentación para estos filtros.</div>
+            @endforelse
         </div>
-    </div>
+
+        @if ($players->hasPages())
+            <footer class="ws-docs-pagination">
+                {{ $players->links() }}
+            </footer>
+        @endif
+    </section>
 </x-layouts.workspace>

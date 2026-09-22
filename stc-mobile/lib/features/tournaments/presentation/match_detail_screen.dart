@@ -91,17 +91,24 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
     final statusLabel = (_match?['status_label'] as String? ?? 'PROGRAMADO').toUpperCase();
     final category = _match?['category'] as String? ?? '';
     final stage = _match?['stage'] as String? ?? '';
+    final tournament = _match?['tournament'] as String? ?? '';
     final scheduled = _match?['scheduled_at'] as String?;
     final field = _match?['field'] as String? ?? '';
 
-    String footer = '';
+    String metaLine = '';
     if (scheduled != null) {
       final dt = DateTime.tryParse(scheduled)?.toLocal();
       if (dt != null) {
-        footer = '${DateFormat('d MMM', 'es').format(dt).toUpperCase()} · ${DateFormat('HH:mm').format(dt)}';
-        if (field.isNotEmpty) footer += ' · ${field.toUpperCase()}';
+        metaLine = '${DateFormat('d MMM', 'es').format(dt).toUpperCase()} · ${DateFormat('HH:mm').format(dt)}';
+        if (field.isNotEmpty) metaLine += ' · ${field.toUpperCase()}';
       }
     }
+
+    final contextLine = [
+      if (tournament.isNotEmpty) tournament,
+      if (category.isNotEmpty) category,
+      if (stage.isNotEmpty) stage,
+    ].join(' · ');
 
     return StcBackScope(
       child: Scaffold(
@@ -114,13 +121,25 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                 title: 'FICHA DEL PARTIDO',
                 onBack: () => stcGoBack(context),
               ),
-              if (category.isNotEmpty || stage.isNotEmpty)
+              if (contextLine.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 8),
-                  child: Text(
-                    [category, stage].where((s) => s.isNotEmpty).join(' · '),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(color: StcColors.textBody, fontSize: 11, fontWeight: FontWeight.w600),
+                  padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+                  child: Column(
+                    children: [
+                      Text(
+                        contextLine,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: StcColors.cyan, fontSize: 11, fontWeight: FontWeight.w700, height: 1.35),
+                      ),
+                      if (metaLine.isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          metaLine,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: StcColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               Expanded(
@@ -203,9 +222,22 @@ class _MatchDetailScreenState extends ConsumerState<MatchDetailScreen> {
                                           ),
                                         ],
                                       ),
-                                      if (footer.isNotEmpty) ...[
-                                        const SizedBox(height: 10),
-                                        Text(footer, style: const TextStyle(color: StcColors.textBody, fontSize: 10, fontWeight: FontWeight.w800)),
+                                      if (metaLine.isNotEmpty) ...[
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                                          decoration: BoxDecoration(
+                                            color: StcColors.surfaceInner,
+                                            borderRadius: BorderRadius.circular(10),
+                                            border: Border.all(color: StcColors.primaryBlue.withValues(alpha: 0.25)),
+                                          ),
+                                          child: Text(
+                                            metaLine,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(color: StcColors.textBody, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.3),
+                                          ),
+                                        ),
                                       ],
                                     ],
                                   ),
@@ -300,18 +332,24 @@ class _LineupMiniCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 210,
+      height: 220,
       decoration: BoxDecoration(
-        color: const Color(0xFF030E08),
+        color: const Color(0xFF041018),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: StcColors.borderSoft),
       ),
       child: Column(
         children: [
-          const SizedBox(height: 7),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 10)),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 10),
+            ),
           ),
           Expanded(
             child: Padding(
@@ -320,21 +358,27 @@ class _LineupMiniCard extends StatelessWidget {
                 builder: (context, constraints) {
                   final width = constraints.maxWidth;
                   final height = constraints.maxHeight;
-                  return Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      gradient: const LinearGradient(colors: [Color(0xFF0A420F), Color(0xFF146B1A), Color(0xFF0A420F)]),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.35)),
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: CustomPaint(
+                      painter: _PitchPainter(),
+                      child: SizedBox(
+                        width: width,
+                        height: height,
+                        child: players.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Sin XI',
+                                  style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700),
+                                ),
+                              )
+                            : Stack(
+                                children: [
+                                  for (final (zone, y) in _rows) ..._dotsFor(zone, y, width, height),
+                                ],
+                              ),
+                      ),
                     ),
-                    child: players.isEmpty
-                        ? const Center(child: Text('Sin XI', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w700)))
-                        : Stack(
-                            children: [
-                              Positioned(left: 6, right: 6, top: height / 2, child: Container(height: 1, color: Colors.white.withValues(alpha: 0.38))),
-                              for (final (zone, y) in _rows)
-                                ..._dotsFor(zone, y, width, height),
-                            ],
-                          ),
                   );
                 },
               ),
@@ -357,6 +401,61 @@ class _LineupMiniCard extends StatelessWidget {
         ),
     ];
   }
+}
+
+class _PitchPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final grass = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFF0B3D14), Color(0xFF126B1C), Color(0xFF0A3A12)],
+      ).createShader(Offset.zero & size);
+    canvas.drawRect(Offset.zero & size, grass);
+
+    final line = Paint()
+      ..color = Colors.white.withValues(alpha: 0.55)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.2;
+
+    final inset = Rect.fromLTWH(4, 4, size.width - 8, size.height - 8);
+    canvas.drawRRect(RRect.fromRectAndRadius(inset, const Radius.circular(4)), line);
+
+    // Halfway line
+    canvas.drawLine(
+      Offset(inset.left, inset.center.dy),
+      Offset(inset.right, inset.center.dy),
+      line,
+    );
+
+    // Center circle
+    canvas.drawCircle(inset.center, inset.shortestSide * 0.14, line);
+    final centerDot = Paint()..color = Colors.white.withValues(alpha: 0.55);
+    canvas.drawCircle(inset.center, 2.2, centerDot);
+
+    // Penalty boxes
+    final boxH = inset.height * 0.18;
+    final boxW = inset.width * 0.62;
+    final topBox = Rect.fromCenter(center: Offset(inset.center.dx, inset.top + boxH / 2), width: boxW, height: boxH);
+    final bottomBox = Rect.fromCenter(center: Offset(inset.center.dx, inset.bottom - boxH / 2), width: boxW, height: boxH);
+    canvas.drawRect(topBox, line);
+    canvas.drawRect(bottomBox, line);
+
+    final goalW = inset.width * 0.28;
+    final goalH = inset.height * 0.07;
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(inset.center.dx, inset.top + goalH / 2), width: goalW, height: goalH),
+      line,
+    );
+    canvas.drawRect(
+      Rect.fromCenter(center: Offset(inset.center.dx, inset.bottom - goalH / 2), width: goalW, height: goalH),
+      line,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 class _BenchColumn extends StatelessWidget {

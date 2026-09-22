@@ -20,14 +20,82 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    public function index(Request $request): RedirectResponse
+    public function index(Request $request): View
     {
-        return redirect()->route('admin.players.index', array_filter([
-            'status' => $request->string('status')->toString() ?: 'review',
-            'tournament_id' => $request->string('tournament_id')->toString() ?: AdminContext::resolveTournamentId($request),
+        $user = $request->user();
+        $filters = [
             'search' => $request->string('search')->toString(),
-            'documentation' => $request->string('documentation')->toString(),
-        ]));
+            'status' => $request->string('status', 'review')->toString(),
+            'type' => $request->string('type', 'all')->toString(),
+            'category_id' => $request->string('category_id')->toString(),
+            'tournament_id' => $request->string('tournament_id')->toString() ?: (string) (AdminContext::resolveTournamentId($request) ?? ''),
+            'delegation_id' => $request->string('delegation_id')->toString(),
+            'team_id' => $request->string('team_id')->toString(),
+        ];
+
+        // Sync request filters so applyFilters sees tournament_id from context when omitted.
+        if ($filters['tournament_id'] !== '' && ! $request->filled('tournament_id')) {
+            $request->merge(['tournament_id' => $filters['tournament_id']]);
+        }
+
+        $playersQuery = Player::query()
+            ->with([
+                'team.category',
+                'team.delegation',
+                'documents' => fn ($query) => $query->whereIn('type', Player::documentTypes()),
+            ])
+            ->when(
+                $user?->restrictsToAssignedClub() || ! $user?->canAccessAllTournaments(),
+                fn ($query) => $query->whereHas('team', fn ($team) => $team->accessibleTo($user))
+            )
+            ->whereHas('documents', function ($query) use ($request) {
+                $query->whereIn('type', Player::documentTypes());
+                $this->applyDocumentScopeFilters($request, $query);
+            })
+            ->when($filters['search'] !== '', function ($query) use ($filters) {
+                $search = $filters['search'];
+                $query->where(function ($query) use ($search) {
+                    $query
+                        ->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('document_number', 'like', "%{$search}%")
+                        ->orWhereHas('team', fn ($team) => $team->where('name', 'like', "%{$search}%"));
+                });
+            });
+
+        $players = $playersQuery
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->paginate(20)
+            ->withQueryString();
+
+        $statsBase = PlayerDocument::query()
+            ->accessibleTo($user)
+            ->whereIn('type', Player::documentTypes());
+        $this->applyDocumentScopeFilters($request, $statsBase);
+
+        $stats = [
+            [(clone $statsBase)->count(), 'Documentos', 'blue'],
+            [(clone $statsBase)->whereIn('status', ['pending', 'observed'])->count(), 'Por revisar', 'orange'],
+            [(clone $statsBase)->where('status', 'approved')->count(), 'Aprobados', 'green'],
+            [$players->total(), 'Jugadores', 'cyan'],
+        ];
+
+        return view('admin.documents.index', [
+            'players' => $players,
+            'filters' => $filters,
+            'stats' => $stats,
+            'types' => Player::documentTypes(),
+            'categories' => Category::query()->accessibleTo($user)->orderBy('name')->get(),
+            'accessibleTournaments' => $user->accessibleTournaments(),
+            'delegations' => Delegation::query()->accessibleTo($user)->orderBy('name')->get(),
+            'teams' => Team::query()->accessibleTo($user)->with('category')->orderBy('name')->get(),
+            'tournament' => $filters['tournament_id'] !== ''
+                ? Tournament::query()->find($filters['tournament_id'])
+                : null,
+            'subheading' => 'Un jugador por fila: mirás el documento en modal y después aprobás.',
+            'canApprove' => (bool) $user?->hasPermission('players.approve'),
+        ]);
     }
 
     public function export(Request $request): StreamedResponse
@@ -253,6 +321,33 @@ class DocumentController extends Controller
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
+    }
+
+    private function applyDocumentScopeFilters(Request $request, $query): void
+    {
+        $user = $request->user();
+
+        $query
+            ->when($request->filled('type') && $request->string('type')->toString() !== 'all', fn ($query) => $query->where('type', $request->string('type')->toString()))
+            ->when($request->filled('status') && $request->string('status')->toString() !== 'all', function ($query) use ($request) {
+                $status = $request->string('status')->toString();
+
+                if ($status === 'review') {
+                    $query->whereIn('status', ['pending', 'observed']);
+
+                    return;
+                }
+
+                $query->where('status', $status);
+            })
+            ->when($request->filled('delegation_id'), fn ($query) => $query->whereHas('player.team', fn ($query) => $query->where('delegation_id', $request->integer('delegation_id'))))
+            ->when($request->filled('team_id'), fn ($query) => $query->whereHas('player', fn ($query) => $query->where('team_id', $request->integer('team_id'))))
+            ->when($request->filled('category_id'), fn ($query) => $query->whereHas('player.team', fn ($query) => $query->where('category_id', $request->integer('category_id'))))
+            ->when($request->filled('tournament_id'), function ($query) use ($request, $user) {
+                $tournamentId = $request->integer('tournament_id');
+                abort_unless($user?->canAccessTournament($tournamentId), 403, 'Este torneo no está dentro de tu alcance.');
+                $query->whereHas('player.team', fn ($query) => $query->where('tournament_id', $tournamentId));
+            });
     }
 
     private function applyFilters(Request $request, $query, bool $skipStatus = false): void

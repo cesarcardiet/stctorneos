@@ -23,7 +23,7 @@ class CatalogController extends ApiController
             ->first();
 
         $live = FixtureMatch::query()
-            ->with(['homeTeam', 'awayTeam', 'field', 'category'])
+            ->with(['homeTeam.delegation', 'awayTeam.delegation', 'field', 'category.tournament'])
             ->where('status', 'live')
             ->orderBy('scheduled_at')
             ->get()
@@ -38,7 +38,7 @@ class CatalogController extends ApiController
             ->map(fn (ContentPost $post) => $this->postPayload($post));
 
         $upcoming = FixtureMatch::query()
-            ->with(['homeTeam', 'awayTeam', 'field', 'category'])
+            ->with(['homeTeam.delegation', 'awayTeam.delegation', 'field', 'category.tournament'])
             ->where('published', true)
             ->whereIn('status', ['scheduled', 'live'])
             ->orderBy('scheduled_at')
@@ -88,7 +88,7 @@ class CatalogController extends ApiController
     public function matches(Request $request): JsonResponse
     {
         $matches = FixtureMatch::query()
-            ->with(['homeTeam', 'awayTeam', 'field', 'category'])
+            ->with(['homeTeam.delegation', 'awayTeam.delegation', 'field', 'category.tournament'])
             ->where(function ($query) {
                 $query->where('published', true)->orWhereIn('status', ['live', 'finished', 'validated']);
             })

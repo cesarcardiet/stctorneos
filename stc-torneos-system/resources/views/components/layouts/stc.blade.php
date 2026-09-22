@@ -98,5 +98,6 @@
         });
     </script>
     @include('workspace.partials.shield-crop-modal')
+    @include('workspace.partials.doc-preview-modal')
 </body>
 </html>

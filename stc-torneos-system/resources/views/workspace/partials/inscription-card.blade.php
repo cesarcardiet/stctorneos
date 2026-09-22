@@ -54,14 +54,30 @@
                 @endphp
                 <article class="ws-inscription-doc-card is-{{ $docTone }}">
                     @if ($isImage)
-                        <a class="ws-inscription-doc-preview" href="{{ $url }}" target="_blank" rel="noopener" title="Ver {{ $type }}">
+                        <button
+                            type="button"
+                            class="ws-inscription-doc-preview"
+                            data-ws-doc-preview
+                            data-preview-src="{{ $url }}"
+                            data-preview-title="{{ $type }}"
+                            data-preview-kind="image"
+                            title="Ver {{ $type }}"
+                        >
                             <img src="{{ $url }}" alt="{{ $type }}">
-                        </a>
+                        </button>
                     @elseif ($url)
-                        <a class="ws-inscription-doc-preview is-file" href="{{ $url }}" target="_blank" rel="noopener" title="Ver {{ $type }}">
+                        <button
+                            type="button"
+                            class="ws-inscription-doc-preview is-file"
+                            data-ws-doc-preview
+                            data-preview-src="{{ $url }}"
+                            data-preview-title="{{ $type }}"
+                            data-preview-kind="{{ $document?->isHtmlDocument() ? 'html' : 'file' }}"
+                            title="Ver {{ $type }}"
+                        >
                             <span>{{ $document?->isHtmlDocument() ? 'HTML' : 'PDF' }}</span>
                             <small>Ver archivo</small>
-                        </a>
+                        </button>
                     @else
                         <div class="ws-inscription-doc-preview is-empty">
                             <span>Sin archivo</span>
@@ -86,9 +102,16 @@
 
                     <div class="ws-inscription-doc-actions">
                         @if ($url)
-                            <a class="ws-btn ghost" href="{{ $url }}" target="_blank" rel="noopener">Ver</a>
+                            <button
+                                type="button"
+                                class="ws-btn ghost"
+                                data-ws-doc-preview
+                                data-preview-src="{{ $url }}"
+                                data-preview-title="{{ $type }}"
+                                data-preview-kind="{{ $isImage ? 'image' : ($document?->isHtmlDocument() ? 'html' : 'file') }}"
+                            >Ver</button>
                         @endif
-                        @if (! empty($canReview) && $document && $url && ! $document->wasSignedByGuardian())
+                        @if (! empty($canReview) && $document && $url && ! $document->wasSignedByGuardian() && PlayerDocument::requiresClubReviewForType($type))
                             @if ($docStatus !== 'approved')
                                 <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
                                     @csrf

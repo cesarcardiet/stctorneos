@@ -297,6 +297,30 @@ class PlayerController extends Controller
             ->with('status', $document->type.' quedó '.$document->statusLabel().'.');
     }
 
+    public function approveAllDocuments(Request $request, Player $player, PlayerDocumentReviewService $reviews): RedirectResponse
+    {
+        $this->assertPlayerAccess($player);
+        abort_unless($request->user()?->hasPermission('players.approve'), 403);
+
+        $result = $reviews->approveAllForPlayer($player, $request->user());
+        $player->refresh();
+
+        if ($result['approved'] === 0) {
+            return redirect()
+                ->route('admin.players.show', [$player, 'tab' => 'aprobacion'])
+                ->with('status', 'No había documentos pendientes de aprobación (faltan archivos o ya estaban aprobados).');
+        }
+
+        $message = 'Se aprobaron '.$result['approved'].' documento(s) de '.$player->fullName().'.';
+        if ($player->documentationSummary() === 'Completa') {
+            $message .= ' La documentación quedó completa: ya podés habilitarlo para jugar.';
+        }
+
+        return redirect()
+            ->route('admin.players.show', [$player, 'tab' => 'aprobacion'])
+            ->with('status', $message);
+    }
+
     public function enable(Request $request, Player $player, PlayerDocumentReviewService $reviews): RedirectResponse
     {
         $this->assertPlayerAccess($player);
