@@ -1,9 +1,25 @@
 # STC Torneos — Sistema base de trabajo
 
 **Carpeta oficial:** `SISTEMA-26-AGOSTO/stc-torneos-system`  
+**App móvil:** `SISTEMA-26-AGOSTO/stc-mobile`  
+**GitHub:** https://github.com/cesarcardiet/stctorneos  
 **Respaldo origen:** `respaldos/stc-torneos-tal-cual-2026-08-26-1738.zip`  
 **Local:** http://127.0.0.1:8002/login  
 **Login demo:** `admin@stctorneos.demo` / `stcdemo`
+
+## Git (control de versiones)
+
+El repo de Git vive **dentro de** `SISTEMA-26-AGOSTO` (no en la raíz de `app1a`).
+
+```powershell
+cd SISTEMA-26-AGOSTO
+git status
+git add -A
+git commit -m "mensaje"
+git push
+```
+
+Carpetas viejas/conflictivas están en `_clausuradas/` — **no desplegar desde ahí**.
 
 ## Plan acordado
 
