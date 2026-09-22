@@ -1,0 +1,41 @@
+<svg width="1400" height="340" viewBox="0 0 1400 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1400" height="340" fill="#061427"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1400" y2="340" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#020714"/>
+      <stop offset=".45" stop-color="#0A2A52"/>
+      <stop offset="1" stop-color="#020714"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1040 78) rotate(153) scale(460 210)">
+      <stop stop-color="#00D5FF" stop-opacity=".55"/>
+      <stop offset=".42" stop-color="#006BFF" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#006BFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1400" height="340" fill="url(#sky)"/>
+  <rect width="1400" height="340" fill="url(#glow)"/>
+  <g opacity=".35">
+    <circle cx="245" cy="70" r="2" fill="#EAF8FF"/>
+    <circle cx="345" cy="42" r="1.4" fill="#EAF8FF"/>
+    <circle cx="546" cy="88" r="1.6" fill="#EAF8FF"/>
+    <circle cx="862" cy="48" r="1.5" fill="#EAF8FF"/>
+    <circle cx="1190" cy="76" r="2" fill="#EAF8FF"/>
+  </g>
+  <g opacity=".65">
+    <path d="M0 230C200 185 323 190 517 219C695 245 816 254 1009 207C1166 169 1284 166 1400 198V340H0V230Z" fill="#030811"/>
+    <path d="M0 250C195 225 390 232 615 255C840 278 1080 271 1400 220" stroke="#00D5FF" stroke-opacity=".22"/>
+    <path d="M108 267H1292" stroke="#4BA7FF" stroke-opacity=".25"/>
+    <path d="M250 300H1150" stroke="#00D5FF" stroke-opacity=".16"/>
+  </g>
+  <g opacity=".6">
+    <path d="M145 218V115M1255 218V115" stroke="#00D5FF" stroke-opacity=".42" stroke-width="3"/>
+    <path d="M145 115C395 67 1005 67 1255 115" stroke="#00D5FF" stroke-opacity=".42" stroke-width="3"/>
+    <path d="M190 210C430 171 970 171 1210 210" stroke="#EAF8FF" stroke-opacity=".12"/>
+    <path d="M220 210L1180 210M270 188L1130 188M330 169L1070 169" stroke="#EAF8FF" stroke-opacity=".08"/>
+  </g>
+  <g opacity=".5">
+    <path d="M0 132L1400 132" stroke="#00D5FF" stroke-opacity=".12"/>
+    <path d="M696 130L570 340M704 130L830 340" stroke="#00D5FF" stroke-opacity=".09"/>
+    <ellipse cx="700" cy="312" rx="155" ry="33" stroke="#EAF8FF" stroke-opacity=".12"/>
+  </g>
+</svg>

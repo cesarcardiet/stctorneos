@@ -1,0 +1,34 @@
+{
+    "target_per_team": 12,
+    "positions": [
+        "Arquero",
+        "Defensor",
+        "Defensor",
+        "Defensor",
+        "Mediocampista",
+        "Mediocampista",
+        "Mediocampista",
+        "Delantero",
+        "Delantero",
+        "Delantero",
+        "Defensor",
+        "Mediocampista"
+    ],
+    "first_names": [
+        "Ian", "Bautista", "Joaquín", "Facundo", "Nicolás", "Ramiro", "Máximo", "Ciro",
+        "Elías", "Simón", "Gael", "Julián", "Bruno", "Dante", "Emiliano", "Felipe",
+        "Gonzalo", "Hugo", "Iván", "Lisandro", "Matías", "Octavio", "Pedro", "Rafael",
+        "Samuel", "Teo", "Ulises", "Vicente", "Tobías", "Camilo", "León", "Andrés"
+    ],
+    "first_names_femenino": [
+        "Emma", "Martina", "Sofía", "Valentina", "Catalina", "Mía", "Isabella", "Olivia",
+        "Juana", "Delfina", "Renata", "Lara", "Pilar", "Alma", "Bianca", "Clara",
+        "Emilia", "Florencia", "Josefina", "Lola", "Mora", "Nina", "Paula", "Rocío"
+    ],
+    "last_names": [
+        "Acosta", "Benítez", "Cáceres", "Domínguez", "Espósito", "Farias", "Godoy", "Herrera",
+        "Ibarra", "Juárez", "Katz", "Ledesma", "Miranda", "Navarro", "Ojeda", "Paz",
+        "Quiroga", "Ramos", "Silva", "Toledo", "Urrutia", "Vega", "Walsh", "Yáñez",
+        "Zárate", "Arias", "Blanco", "Correa", "Duarte", "Echeverría", "Funes", "Gallo"
+    ]
+}

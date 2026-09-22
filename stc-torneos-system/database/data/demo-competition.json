@@ -1,0 +1,36 @@
+{
+    "tournament_slug": "santa-teresita-cup-2026",
+    "extra_tournament_slugs": ["copa-invierno-stc", "stc-buenos-aires-2026"],
+    "teams_per_category": 8,
+    "players_per_team": 14,
+    "team_pool": [
+        {"name": "San Lorenzo", "delegation": "Buenos Aires", "city": "Buenos Aires", "country_code": "AR", "group": "A"},
+        {"name": "River Plate", "delegation": "Capital Federal", "city": "CABA", "country_code": "AR", "group": "A"},
+        {"name": "Boca Juniors", "delegation": "La Boca", "city": "CABA", "country_code": "AR", "group": "A"},
+        {"name": "Racing Club", "delegation": "Avellaneda", "city": "Buenos Aires", "country_code": "AR", "group": "A"},
+        {"name": "Palmeiras", "delegation": "Brasil", "city": "Sao Paulo", "country_code": "BR", "group": "B"},
+        {"name": "Independiente", "delegation": "Avellaneda", "city": "Buenos Aires", "country_code": "AR", "group": "B"},
+        {"name": "Cosmos FC", "delegation": "Rosario", "city": "Santa Fe", "country_code": "AR", "group": "B"},
+        {"name": "Juventud", "delegation": "La Plata", "city": "Buenos Aires", "country_code": "AR", "group": "B"}
+    ],
+    "staff_roles": [
+        {"role": "director_tecnico", "first_name": "Marcelo", "last_name": "Giménez"},
+        {"role": "preparador_fisico", "first_name": "Lucía", "last_name": "Benítez"}
+    ],
+    "player_status_by_jersey": {
+        "1": "enabled",
+        "2": "enabled",
+        "3": "enabled",
+        "4": "enabled",
+        "5": "enabled",
+        "6": "enabled",
+        "7": "enabled",
+        "8": "enabled",
+        "9": "enabled",
+        "10": "pending",
+        "11": "observed",
+        "12": "approved",
+        "13": "draft",
+        "14": "rejected"
+    }
+}
