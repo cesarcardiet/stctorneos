@@ -7,9 +7,15 @@
         || $type === \App\Models\Player::guardianCertificateType();
     $status = $document?->wasSignedByGuardian()
         ? ($document->type === \App\Models\Player::guardianCertificateType() ? 'Constancia generada' : 'Firmado por tutor')
-        : ($isAuthorizationArea ? 'Pendiente de firma del tutor' : ($document?->statusLabel() ?? 'Pendiente'));
+        : ($isAuthorizationArea && ! $document?->fileUrl() ? 'Pendiente de firma del tutor' : ($document?->statusLabel() ?? 'Pendiente'));
     $url = $document?->fileUrl();
-    $isImage = $document?->isImage() && $url;
+    $isImage = (bool) ($document?->isImage() && $url);
+    $isHtml = (bool) ($document?->isHtmlDocument() && $url);
+    $canApproveDoc = $allowReview
+        && $document
+        && $url
+        && ! $document->wasSignedByGuardian()
+        && \App\Models\PlayerDocument::requiresClubReviewForType((string) $type);
     $statusTone = match ($document?->status ?? 'pending') {
         'approved' => 'is-ok',
         'rejected' => 'is-bad',
@@ -29,9 +35,22 @@
                 data-ws-doc-preview
                 data-preview-src="{{ $url }}"
                 data-preview-title="{{ $label }}"
+                data-preview-kind="image"
                 title="Ver {{ $label }}"
             >
                 <img src="{{ $url }}" alt="{{ $label }}">
+            </button>
+        @elseif ($url)
+            <button
+                type="button"
+                class="ws-doc-thumb is-file"
+                data-ws-doc-preview
+                data-preview-src="{{ $url }}"
+                data-preview-title="{{ $label }}"
+                data-preview-kind="{{ $isHtml ? 'html' : 'file' }}"
+                title="Ver {{ $label }}"
+            >
+                <span>{{ $isHtml ? 'HTML' : 'PDF' }}</span>
             </button>
         @else
             <span class="ws-doc-thumb is-empty" aria-hidden="true"></span>
@@ -42,14 +61,21 @@
             @if ($document?->original_name)
                 <small class="ws-muted">{{ $document->original_name }}</small>
             @endif
-            @if ($document?->notes && $isAuthorizationArea)
+            @if ($document?->notes && in_array($document->status, ['observed', 'rejected'], true))
                 <small class="ws-muted">{{ $document->notes }}</small>
             @endif
         </div>
     </div>
     <div class="ws-doc-card-actions">
-        @if ($url && ! $isImage)
-            <a class="ws-btn ghost" href="{{ $url }}" target="_blank" rel="noopener">{{ $document?->isHtmlDocument() ? 'Ver constancia' : 'Ver archivo' }}</a>
+        @if ($url)
+            <button
+                type="button"
+                class="ws-btn ghost"
+                data-ws-doc-preview
+                data-preview-src="{{ $url }}"
+                data-preview-title="{{ $label }}"
+                data-preview-kind="{{ $isImage ? 'image' : ($isHtml ? 'html' : 'file') }}"
+            >Ver</button>
         @endif
         @if ($canEdit && $allowUpload)
             <form class="ws-doc-upload" method="post" action="{{ route('workspace.categories.players.documents', [$category, $player]) }}" enctype="multipart/form-data">
@@ -61,13 +87,22 @@
                 </label>
             </form>
         @endif
-        @if ($canEdit && $allowReview && $document && ! $isAuthorizationArea)
-            <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
-                @csrf
-                @method('PATCH')
-                <input type="hidden" name="status" value="{{ $document->status === 'approved' ? 'observed' : 'approved' }}">
-                <button type="submit" class="ws-btn ghost">{{ $document->status === 'approved' ? 'Observar' : 'Aprobar' }}</button>
-            </form>
+        @if ($canEdit && $canApproveDoc)
+            @if ($document->status !== 'approved')
+                <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="approved">
+                    <button type="submit" class="ws-btn">Aprobar</button>
+                </form>
+            @else
+                <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
+                    @csrf
+                    @method('PATCH')
+                    <input type="hidden" name="status" value="observed">
+                    <button type="submit" class="ws-btn ghost">Observar</button>
+                </form>
+            @endif
         @endif
     </div>
 </li>

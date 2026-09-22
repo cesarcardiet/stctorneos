@@ -409,6 +409,7 @@ Route::middleware(['auth', 'permission:players.approve'])->prefix('admin/jugador
     Route::get('/{player}/editar', [PlayerController::class, 'edit'])->name('edit');
     Route::patch('/{player}/estado', [PlayerController::class, 'updateStatus'])->name('status');
     Route::patch('/{player}/revision', [PlayerController::class, 'review'])->name('review');
+    Route::patch('/{player}/documentos/aprobar-todo', [PlayerController::class, 'approveAllDocuments'])->name('documents.approve-all');
     Route::patch('/{player}/documentos/{document}', [PlayerController::class, 'reviewDocument'])->name('documents.review');
     Route::patch('/{player}/habilitar', [PlayerController::class, 'enable'])->name('enable');
     Route::put('/{player}', [PlayerController::class, 'update'])->name('update');

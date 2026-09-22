@@ -75,6 +75,65 @@ class PlayerDocumentReviewService
         return $player->fresh();
     }
 
+    /**
+     * Aprueba de una vez todos los documentos del jugador que el club debe revisar
+     * y que ya tienen archivo cargado (no toca firmas del tutor).
+     *
+     * @return array{approved: int, skipped: int}
+     */
+    public function approveAllForPlayer(Player $player, ?User $user = null): array
+    {
+        $player->loadMissing('documents');
+        $approved = 0;
+        $skipped = 0;
+
+        foreach (Player::documentTypes() as $type) {
+            $document = $player->documentByType($type);
+
+            if (! $document || ! $document->fileUrl()) {
+                $skipped++;
+
+                continue;
+            }
+
+            if ($document->wasSignedByGuardian()) {
+                $skipped++;
+
+                continue;
+            }
+
+            if (! PlayerDocument::requiresClubReviewForType($type)
+                && in_array($type, Player::authorizationDocumentTypes(), true)) {
+                $skipped++;
+
+                continue;
+            }
+
+            if ($document->status === 'approved') {
+                $skipped++;
+
+                continue;
+            }
+
+            $this->quickStatus($document, 'approved', null, $user);
+            $approved++;
+        }
+
+        if ($approved > 0) {
+            AuditLog::create([
+                'user_id' => $user?->id ?? auth()->id(),
+                'module' => 'Documentación',
+                'action' => 'approve_all_documents',
+                'description' => 'Aprobación documental global de '.$player->fullName().': '.$approved.' documento(s).',
+                'auditable_type' => Player::class,
+                'auditable_id' => $player->id,
+                'metadata' => ['approved' => $approved, 'skipped' => $skipped],
+            ]);
+        }
+
+        return ['approved' => $approved, 'skipped' => $skipped];
+    }
+
     public function validatedReviewPayload(Request $request, bool $requireNotesOnNegative = true): array
     {
         $data = $request->validate([

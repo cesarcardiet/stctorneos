@@ -56,6 +56,7 @@
         </main>
     </div>
     @include('workspace.partials.shield-crop-modal')
+    @include('workspace.partials.doc-preview-modal')
     @stack('scripts')
 </body>
 </html>

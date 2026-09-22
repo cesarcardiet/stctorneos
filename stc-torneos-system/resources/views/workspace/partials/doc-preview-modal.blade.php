@@ -6,7 +6,13 @@
             <button type="button" class="ws-modal-x" data-ws-close aria-label="Cerrar">✕</button>
         </header>
         <div class="ws-modal-body ws-doc-preview-body">
-            <img data-ws-doc-preview-image src="" alt="">
+            <img data-ws-doc-preview-image src="" alt="" hidden>
+            <iframe data-ws-doc-preview-frame title="Documento" hidden></iframe>
+            <p class="ws-muted" data-ws-doc-preview-empty hidden>No se pudo cargar la vista previa.</p>
         </div>
+        <footer class="ws-doc-preview-foot">
+            <a class="ws-btn ghost" data-ws-doc-preview-open href="#" target="_blank" rel="noopener" hidden>Abrir en pestaña</a>
+            <button type="button" class="ws-btn" data-ws-close>Cerrar</button>
+        </footer>
     </div>
 </div>
