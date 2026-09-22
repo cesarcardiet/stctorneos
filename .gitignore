@@ -1,17 +1,21 @@
-# Entorno y secretos
-.env
-.env.*
-!.env.example
-*.pem
-*.key
-auth.json
+# Solo versionamos sistema web + app móvil
+*
+!.gitignore
+!README.md
+!stc-torneos-system/
+!stc-torneos-system/**
+!stc-mobile/
+!stc-mobile/**
 
-# Laravel
+# Secretos / build / deps (Laravel)
 stc-torneos-system/vendor/
 stc-torneos-system/node_modules/
 stc-torneos-system/public/build/
 stc-torneos-system/public/hot
 stc-torneos-system/public/storage
+stc-torneos-system/.env
+stc-torneos-system/.env.*
+!stc-torneos-system/.env.example
 stc-torneos-system/storage/*.key
 stc-torneos-system/storage/logs/*
 !stc-torneos-system/storage/logs/.gitignore
@@ -23,7 +27,6 @@ stc-torneos-system/storage/framework/views/*
 !stc-torneos-system/storage/framework/views/.gitignore
 stc-torneos-system/storage/framework/testing/*
 !stc-torneos-system/storage/framework/testing/.gitignore
-stc-torneos-system/storage/pail
 stc-torneos-system/bootstrap/cache/*
 !stc-torneos-system/bootstrap/cache/.gitignore
 stc-torneos-system/.phpunit.result.cache
@@ -31,26 +34,18 @@ stc-torneos-system/.phpunit.cache
 stc-torneos-system/database/*.sqlite
 stc-torneos-system/public/images/players/**
 stc-torneos-system/public/images/teams/**
-!stc-torneos-system/public/images/**/.gitignore
 
-# Flutter / móvil
+# Flutter
 stc-mobile/.dart_tool/
 stc-mobile/.pub-cache/
 stc-mobile/build/
 stc-mobile/.flutter-plugins-dependencies
 stc-mobile/**/Pods/
 
-# IDE / OS
+# IDE
 .idea/
 .vscode/
-.fleet/
-.nova/
-.zed/
-*.swp
 .DS_Store
 Thumbs.db
-
-# Empaquetados / basura
 *.tgz
 *.zip
-!docs-stc/**/*.zip
