@@ -80,7 +80,7 @@ class ApiController extends Controller
             'status' => $tournament->status,
             'starts_at' => $tournament->starts_at?->toDateString(),
             'ends_at' => $tournament->ends_at?->toDateString(),
-            'logo' => $this->media($tournament->logo_path),
+            'logo' => $tournament->logoUrl(),
             'visibility' => $tournament->visibility,
         ];
     }
@@ -97,7 +97,7 @@ class ApiController extends Controller
             'branch' => $category->branch,
             'modality' => $category->modality,
             'format' => $category->competition_format,
-            'image' => $this->media($category->image_path),
+            'image' => $category->bannerUrl(),
             'tournament' => $category->relationLoaded('tournament') && $category->tournament
                 ? $this->tournamentPayload($category->tournament)
                 : null,
@@ -143,6 +143,7 @@ class ApiController extends Controller
             'scheduled_at' => $match->scheduled_at?->toIso8601String(),
             'field' => $match->field?->name,
             'category' => $match->category?->name,
+            'tournament' => $match->category?->tournament?->name,
             'published' => (bool) $match->published,
             'home' => $match->homeTeam ? $this->teamPayload($match->homeTeam) : null,
             'away' => $match->awayTeam ? $this->teamPayload($match->awayTeam) : null,

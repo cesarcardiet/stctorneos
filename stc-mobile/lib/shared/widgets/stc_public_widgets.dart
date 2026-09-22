@@ -786,31 +786,70 @@ class StcTeamShield extends StatelessWidget {
   final String? logo;
   final double size;
 
+  static const _fallbackAsset = 'assets/images/stc_logo.png';
+
   @override
   Widget build(BuildContext context) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
-    final hasLogo = logo != null && logo!.isNotEmpty;
+    final hasLogo = logo != null && logo!.trim().isNotEmpty;
+
     return Container(
       width: size,
       height: size,
-      padding: EdgeInsets.all(size * 0.08),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(color: StcColors.primaryBlue.withValues(alpha: 0.65)),
+        color: const Color(0xFF0A1528),
+        border: Border.all(color: StcColors.primaryBlue.withValues(alpha: 0.55)),
+        boxShadow: [
+          BoxShadow(
+            color: StcColors.primaryBlue.withValues(alpha: 0.18),
+            blurRadius: size * 0.25,
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       child: hasLogo
-          ? Image.network(
-              logo!,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Text(
-                initial,
-                style: TextStyle(color: StcColors.background, fontWeight: FontWeight.w800, fontSize: size * 0.35),
+          ? Padding(
+              padding: EdgeInsets.all(size * 0.12),
+              child: Image.network(
+                logo!,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.medium,
+                errorBuilder: (_, __, ___) => Image.asset(
+                  _fallbackAsset,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => _InitialMark(initial: initial, size: size),
+                ),
               ),
             )
-          : Text(initial, style: TextStyle(color: StcColors.background, fontWeight: FontWeight.w800, fontSize: size * 0.35)),
+          : Padding(
+              padding: EdgeInsets.all(size * 0.18),
+              child: Image.asset(
+                _fallbackAsset,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => _InitialMark(initial: initial, size: size),
+              ),
+            ),
+    );
+  }
+}
+
+class _InitialMark extends StatelessWidget {
+  const _InitialMark({required this.initial, required this.size});
+
+  final String initial;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      initial,
+      style: TextStyle(
+        color: StcColors.cyan,
+        fontWeight: FontWeight.w800,
+        fontSize: size * 0.38,
+      ),
     );
   }
 }
@@ -829,29 +868,70 @@ class StcFixtureRoundHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StcSurfaceCard(
-      padding: const EdgeInsets.fromLTRB(13, 12, 13, 12),
-      child: SizedBox(
-        height: 32,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(roundLabel.toUpperCase(), style: const TextStyle(color: StcColors.textMuted, fontSize: 10, fontWeight: FontWeight.w800)),
-                  Text(dateLabel, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-                ],
-              ),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF071833), Color(0xFF03060C)],
+        ),
+        border: Border.all(color: StcColors.cyan.withValues(alpha: 0.55), width: 1.2),
+        boxShadow: const [
+          BoxShadow(color: Color(0x4400D1FF), blurRadius: 12, spreadRadius: 0),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 3,
+            height: 34,
+            decoration: BoxDecoration(
+              color: StcColors.cyan,
+              borderRadius: BorderRadius.circular(2),
             ),
-            if (liveCount > 0)
-              Text(
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  roundLabel.toUpperCase(),
+                  style: const TextStyle(
+                    color: StcColors.cyan,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  dateLabel,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (liveCount > 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: StcColors.liveRed.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: StcColors.liveRed.withValues(alpha: 0.7)),
+              ),
+              child: Text(
                 'EN VIVO $liveCount',
                 style: const TextStyle(color: StcColors.liveRed, fontSize: 10, fontWeight: FontWeight.w800),
               ),
-          ],
-        ),
+            ),
+        ],
       ),
     );
   }
@@ -898,11 +978,12 @@ class StcFixtureMatchRow extends StatelessWidget {
     if (isLive) {
       statusLabel = 'EN VIVO';
       statusColor = StcColors.liveRed;
-    } else if (timePrimary.contains('.') == false && timePrimary.isNotEmpty) {
+    } else if (timeSecondary == null && timePrimary.isNotEmpty && !timePrimary.contains('.')) {
       statusLabel = 'HOY';
       statusColor = StcColors.cyan;
     } else if (field.isNotEmpty) {
-      statusLabel = field.length > 8 ? field.substring(0, 8).toUpperCase() : field.toUpperCase();
+      final short = field.toUpperCase().replaceFirst(RegExp(r'^CANCHA\s*', caseSensitive: false), 'CAN ');
+      statusLabel = short.length > 10 ? short.substring(0, 10) : short;
       statusColor = StcColors.cyan;
     } else {
       statusLabel = match['status_label'] as String? ?? '';
@@ -913,41 +994,38 @@ class StcFixtureMatchRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: StcSurfaceCard(
-        padding: const EdgeInsets.fromLTRB(13, 10, 13, 10),
+        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
         child: SizedBox(
-          height: 56,
+          height: 64,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                width: 58,
+                width: 52,
                 child: timeSecondary == null
-                    ? Text(timePrimary, style: const TextStyle(color: StcColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600))
+                    ? Text(timePrimary, style: const TextStyle(color: StcColors.textMuted, fontSize: 11, fontWeight: FontWeight.w700))
                     : Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(timePrimary, style: const TextStyle(color: StcColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
-                          Text(timeSecondary, style: const TextStyle(color: StcColors.textMuted, fontSize: 11, fontWeight: FontWeight.w600)),
+                          Text(timePrimary, style: const TextStyle(color: StcColors.textMuted, fontSize: 11, fontWeight: FontWeight.w700)),
+                          Text(timeSecondary, style: const TextStyle(color: StcColors.textMuted, fontSize: 10, fontWeight: FontWeight.w600)),
                         ],
                       ),
               ),
-              StcTeamShield.fromTeam(team: home ?? const {}, size: 28),
-              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(homeName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                    _FixtureTeamLine(team: home ?? {'name': homeName}, name: homeName),
                     const SizedBox(height: 8),
-                    Text(awayName, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: StcColors.textBody, fontSize: 12)),
+                    _FixtureTeamLine(team: away ?? {'name': awayName}, name: awayName, muted: true),
                   ],
                 ),
               ),
               if (statusLabel.isNotEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.only(right: 8),
                   child: Text(statusLabel, style: TextStyle(color: statusColor, fontSize: 10, fontWeight: FontWeight.w800)),
                 ),
               Container(
@@ -965,6 +1043,40 @@ class StcFixtureMatchRow extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _FixtureTeamLine extends StatelessWidget {
+  const _FixtureTeamLine({
+    required this.team,
+    required this.name,
+    this.muted = false,
+  });
+
+  final Map<String, dynamic> team;
+  final String name;
+  final bool muted;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        StcTeamShield.fromTeam(team: team, size: 24),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: muted ? StcColors.textBody : Colors.white,
+              fontSize: 12,
+              fontWeight: muted ? FontWeight.w600 : FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

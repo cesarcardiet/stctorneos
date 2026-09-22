@@ -40,8 +40,8 @@
         </select>
         <select name="tournament_id">
             <option value="">Todos los torneos</option>
-            @foreach ($accessibleTournaments as $tournament)
-                <option value="{{ $tournament->id }}" @selected((string) $filters['tournament_id'] === (string) $tournament->id)>{{ $tournament->name }}</option>
+            @foreach ($accessibleTournaments as $item)
+                <option value="{{ $item->id }}" @selected((string) $filters['tournament_id'] === (string) $item->id)>{{ $item->name }}</option>
             @endforeach
         </select>
         <select name="delegation_id">
@@ -56,94 +56,124 @@
                 <option value="{{ $team->id }}" @selected((string) $filters['team_id'] === (string) $team->id)>{{ $team->name }} · {{ $team->category?->name ?? $team->category?->birth_year }}</option>
             @endforeach
         </select>
-        <input name="search" value="{{ $filters['search'] }}" placeholder="Buscar jugador, documento o equipo">
+        <input name="search" value="{{ $filters['search'] }}" placeholder="Buscar jugador o equipo">
         <button type="submit">Filtrar</button>
         <a href="{{ route('admin.documents.index') }}">Limpiar</a>
         <a class="admin-figma-export" href="{{ route('admin.documents.export', request()->query()) }}">Exportar</a>
     </form>
 
-    <section class="stc-card table-card team-list-panel player-list-panel docs-list-panel admin-figma-panel">
+    <section class="stc-card table-card docs-list-panel admin-figma-panel">
         <header class="admin-list-heading">
-            <h3>Bandeja documental</h3>
+            <h3>Bandeja por jugador</h3>
             <a href="{{ route('admin.documents.requirements') }}">Requisitos</a>
         </header>
-        <div class="stc-table docs-table admin-figma-table">
-            <div class="table-head">
-                <span>Jugador</span>
-                <span>Delegación</span>
-                <span>Equipo</span>
-                <span>Documento</span>
-                <span>Subido</span>
-                <span>Estado</span>
-                <span>Habilitación</span>
-                <span>Acciones</span>
-            </div>
-            @forelse ($documents as $document)
-                <div class="table-row">
-                    <span>
+
+        <div class="docs-player-list">
+            @forelse ($players as $player)
+                @php
+                    $pendingCount = $player->documents
+                        ->whereIn('type', \App\Models\Player::documentTypes())
+                        ->whereIn('status', ['pending', 'observed'])
+                        ->count();
+                @endphp
+                <details class="docs-player-card" @if ($pendingCount > 0) open @endif>
+                    <summary class="docs-player-summary">
                         <x-entity-cell
-                            :href="route('admin.documents.show', $document)"
-                            :src="$document->player?->listPhotoUrl() ?? asset('images/defaults/player.svg')"
-                            :alt="$document->player?->fullName() ?? 'Sin jugador'"
+                            :href="route('admin.players.show', [$player, 'tab' => 'aprobacion'])"
+                            :src="$player->listPhotoUrl()"
+                            :alt="$player->fullName()"
                             shape="round"
                         >
-                            {{ $document->player?->fullName() ?? 'Sin jugador' }}
-                            <x-slot:subtitle>{{ $document->player?->formattedDocument() }}</x-slot:subtitle>
+                            {{ $player->fullName() }}
+                            <x-slot:subtitle>
+                                {{ $player->team?->name ?? 'Sin equipo' }}
+                                @if ($player->team?->category)
+                                    · {{ $player->team->category->name }}
+                                @endif
+                            </x-slot:subtitle>
                         </x-entity-cell>
-                    </span>
-                    <span>
-                        @if ($document->player?->team?->delegation)
-                            <x-entity-ref :href="route('admin.delegations.show', $document->player->team->delegation)" :src="$document->player->team->delegation->logoUrl()" :alt="$document->player->team->delegation->name">
-                                {{ $document->player->team->delegation->name }}
-                            </x-entity-ref>
-                        @else
-                            {{ $document->player?->team?->delegation_name ?? '—' }}
+                        <span class="docs-player-summary-meta">
+                            <span @class(['admin-status', 'is-observed' => $pendingCount > 0, 'is-approved' => $pendingCount === 0])>
+                                {{ $pendingCount > 0 ? $pendingCount.' por revisar' : $player->documentationSummary() }}
+                            </span>
+                            <span class="docs-player-chevron" aria-hidden="true">▾</span>
+                        </span>
+                    </summary>
+
+                    <div class="docs-player-docs">
+                        @foreach (\App\Models\Player::documentTypes() as $type)
+                            @php
+                                $document = $player->documentByType($type);
+                                $url = $document?->fileUrl();
+                                $isImage = (bool) ($document?->isImage() && $url);
+                                $isHtml = (bool) ($document?->isHtmlDocument() && $url);
+                                $previewKind = $isImage ? 'image' : ($isHtml ? 'html' : 'file');
+                                $canReviewDoc = $canApprove
+                                    && $document
+                                    && $url
+                                    && ! $document->wasSignedByGuardian()
+                                    && ($document->requiresClubApproval() || ! in_array($type, \App\Models\Player::authorizationDocumentTypes(), true));
+                            @endphp
+                            <article class="docs-player-doc-row">
+                                <div class="docs-player-doc-copy">
+                                    <strong>{{ $type }}</strong>
+                                    @if ($document)
+                                        <span @class(['admin-status', 'is-approved' => $document->status === 'approved', 'is-observed' => in_array($document->status, ['pending', 'observed'], true), 'is-blocked' => $document->status === 'rejected'])>
+                                            {{ $document->wasSignedByGuardian() ? 'Firmado por tutor' : $document->statusLabel() }}
+                                        </span>
+                                    @else
+                                        <span class="admin-status is-observed">Sin cargar</span>
+                                    @endif
+                                </div>
+                                <div class="docs-player-doc-actions">
+                                    @if ($url)
+                                        <button
+                                            type="button"
+                                            class="stc-btn-new"
+                                            data-ws-doc-preview
+                                            data-preview-src="{{ $url }}"
+                                            data-preview-title="{{ $type }}"
+                                            data-preview-kind="{{ $previewKind }}"
+                                        >Ver</button>
+                                    @endif
+                                    @if ($canReviewDoc && $document->status !== 'approved')
+                                        <form method="post" action="{{ route('admin.players.documents.review', [$player, $document]) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <input type="hidden" name="status" value="approved">
+                                            <button type="submit" class="stc-btn-new">Aprobar</button>
+                                        </form>
+                                    @elseif ($canReviewDoc)
+                                        <span class="admin-status is-approved">Aprobado</span>
+                                    @endif
+                                </div>
+                            </article>
+                        @endforeach
+                    </div>
+
+                    <footer class="docs-player-foot">
+                        <a href="{{ route('admin.players.show', [$player, 'tab' => 'aprobacion']) }}">Abrir ficha de aprobación</a>
+                        @if ($canApprove && $pendingCount > 0)
+                            <form method="post" action="{{ route('admin.players.documents.approve-all', $player) }}" data-confirm="¿Aprobar toda la documentación cargada de {{ $player->fullName() }}?">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="stc-btn-new">Aprobar toda la documentación</button>
+                            </form>
                         @endif
-                    </span>
-                    <span>
-                        @if ($document->player?->team)
-                            <x-entity-ref :href="route('admin.teams.show', $document->player->team)" :src="$document->player->team->shieldUrl()" :alt="$document->player->team->name">
-                                {{ $document->player->team->name }}
-                            </x-entity-ref>
-                            @if ($document->player->team->category)
-                                <small><a href="{{ route('admin.categories.show', $document->player->team->category) }}">{{ $document->player->team->category->name }}</a></small>
-                            @endif
-                        @else
-                            —
-                        @endif
-                    </span>
-                    <span>{{ $document->type }}</span>
-                    <span>{{ $document->uploaded_at?->format('d/m/Y') ?: '—' }}</span>
-                    <span @class(['admin-status', 'is-approved' => $document->status === 'approved', 'is-observed' => in_array($document->status, ['pending', 'observed'], true), 'is-blocked' => $document->status === 'rejected'])>{{ $document->statusLabel() }}</span>
-                    <span>{{ $document->player?->eligibilityLabel() ?? '—' }}</span>
-                    <span class="category-actions">
-                        <a href="{{ route('admin.documents.show', $document) }}">{{ $document->actionLabel() }}</a>
-                        @if ($document->player)
-                            <a href="{{ route('admin.players.show', $document->player) }}">Ficha</a>
-                        @endif
-                    </span>
-                </div>
+                        <a href="{{ route('admin.players.edit', $player) }}">Editar jugador</a>
+                    </footer>
+                </details>
             @empty
-                <div class="table-row">
-                    <span>
-                        <strong>No hay documentos con esos filtros.</strong>
-                        <small>Cambiá filtros o revisá la lista de buena fe.</small>
-                    </span>
-                    <span>-</span>
-                    <span>-</span>
-                    <span>-</span>
-                    <span>-</span>
-                    <span>-</span>
-                    <span>-</span>
-                    <span class="category-actions">
-                        <a href="{{ route('admin.documents.index') }}">Ver todos</a>
-                    </span>
+                <div class="category-empty-state">
+                    <strong>No hay jugadores con esos filtros.</strong>
+                    <small>Cambiá filtros o revisá la lista de buena fe.</small>
                 </div>
             @endforelse
         </div>
-        @if ($documents->hasPages())
+
+        @if ($players->hasPages())
             <footer class="admin-list-pagination">
-                {{ $documents->links() }}
+                {{ $players->links() }}
             </footer>
         @endif
     </section>

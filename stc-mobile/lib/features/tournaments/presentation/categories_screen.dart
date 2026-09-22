@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/navigation/stc_navigation.dart';
+import '../../../shared/navigation/stc_team_media.dart';
 import '../../../shared/theme/stc_theme.dart';
 import '../../../shared/widgets/stc_app_drawer.dart';
 import '../../../shared/widgets/stc_auth_scaffold.dart';
@@ -148,7 +149,7 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                       final modality = category['modality'] as String? ?? '';
                       final format = category['format'] as String? ?? '';
                       final branch = category['branch'] as String? ?? '';
-                      final image = category['image'] as String?;
+                      final image = stcCategoryImageUrl(category);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: StcSurfaceCard(
@@ -160,21 +161,32 @@ class _CategoriesScreenState extends ConsumerState<CategoriesScreen> {
                                 width: 52,
                                 height: 52,
                                 decoration: BoxDecoration(
-                                  color: StcColors.surfaceInner,
+                                  color: const Color(0xFF0A1528),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: StcColors.primaryBlue.withValues(alpha: 0.45)),
                                 ),
                                 alignment: Alignment.center,
                                 clipBehavior: Clip.antiAlias,
-                                child: image != null && image.isNotEmpty
-                                    ? Image.network(
-                                        image,
-                                        width: 52,
-                                        height: 52,
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (_, __, ___) => const Icon(Icons.category_outlined, color: StcColors.cyan, size: 26),
-                                      )
-                                    : const Icon(Icons.category_outlined, color: StcColors.cyan, size: 26),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(6),
+                                  child: image != null && image.isNotEmpty
+                                      ? Image.network(
+                                          image,
+                                          width: 40,
+                                          height: 40,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => Image.asset(
+                                            'assets/images/stc_logo.png',
+                                            fit: BoxFit.contain,
+                                            errorBuilder: (_, __, ___) => const Icon(Icons.category_outlined, color: StcColors.cyan, size: 26),
+                                          ),
+                                        )
+                                      : Image.asset(
+                                          'assets/images/stc_logo.png',
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => const Icon(Icons.category_outlined, color: StcColors.cyan, size: 26),
+                                        ),
+                                ),
                               ),
                               const SizedBox(width: 14),
                               Expanded(

@@ -627,19 +627,51 @@ class CategoryController extends Controller
         ]));
     }
 
-    public function documents(Category $category): View
+    public function documents(Request $request, Category $category): View
     {
         $this->assertCategoryManagement(auth()->user());
         $category = $this->assertCategory($category);
-        $documents = PlayerDocument::query()
-            ->with('player.team')
-            ->whereHas('player.team', fn ($query) => $query->where('category_id', $category->id))
-            ->whereIn('type', Player::documentTypes())
-            ->latest()
-            ->get();
+        $search = trim($request->string('search')->toString());
+        $status = $request->string('status', 'all')->toString();
+
+        $players = Player::query()
+            ->with([
+                'team',
+                'documents' => fn ($query) => $query->whereIn('type', Player::documentTypes()),
+            ])
+            ->whereHas('team', fn ($query) => $query->where('category_id', $category->id))
+            ->whereHas('documents', function ($query) use ($status) {
+                $query->whereIn('type', Player::documentTypes());
+
+                if ($status === 'review') {
+                    $query->whereIn('status', ['pending', 'observed']);
+                } elseif ($status !== 'all') {
+                    $query->where('status', $status);
+                }
+            })
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query
+                        ->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere('document_number', 'like', "%{$search}%")
+                        ->orWhereHas('team', fn ($team) => $team->where('name', 'like', "%{$search}%"))
+                        ->orWhereHas('documents', fn ($docs) => $docs
+                            ->whereIn('type', Player::documentTypes())
+                            ->where('type', 'like', "%{$search}%"));
+                });
+            })
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->paginate(15)
+            ->withQueryString();
 
         return view('workspace.documents', $this->page($category, 'Configuración', [
-            'documents' => $documents,
+            'players' => $players,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+            ],
             'canEdit' => $this->canEdit(auth()->user()),
         ]));
     }
