@@ -1061,51 +1061,88 @@ function bindTournamentGate() {
 bindTournamentGate();
 
 document.querySelectorAll('[data-ficha-steps]').forEach((form) => {
+    if (form.dataset.fichaStepsReady === '1') {
+        return;
+    }
+    form.dataset.fichaStepsReady = '1';
+
     const steps = [...form.querySelectorAll('[data-ficha-step]')];
     const dots = [...form.querySelectorAll('[data-ficha-dot]')];
     const prev = form.querySelector('[data-ficha-prev]');
     const next = form.querySelector('[data-ficha-next]');
     const finish = form.querySelector('[data-ficha-finish]');
+    if (! steps.length) {
+        return;
+    }
+
     let current = 0;
 
     const show = (index) => {
-        current = index;
+        current = Math.max(0, Math.min(index, steps.length - 1));
         steps.forEach((step, i) => {
-            step.hidden = i !== index;
+            step.hidden = i !== current;
         });
         dots.forEach((dot, i) => {
-            dot.classList.toggle('is-current', i === index);
-            dot.classList.toggle('is-done', i < index);
+            dot.classList.toggle('is-current', i === current);
+            dot.classList.toggle('is-done', i < current);
         });
-        if (prev) prev.hidden = index === 0;
-        if (next) next.hidden = index === steps.length - 1;
-        if (finish) finish.hidden = index !== steps.length - 1;
+        if (prev) {
+            prev.hidden = current === 0;
+        }
+        if (next) {
+            next.hidden = current === steps.length - 1;
+        }
+        if (finish) {
+            finish.hidden = current !== steps.length - 1;
+        }
     };
 
-    const fieldsOf = (step) => [...step.querySelectorAll('input, select, textarea')].filter((field) => !field.disabled);
+    const fieldsOf = (root) => [...root.querySelectorAll('input, select, textarea')]
+        .filter((field) => ! field.disabled && field.type !== 'hidden');
 
-    prev?.addEventListener('click', () => show(Math.max(0, current - 1)));
-    next?.addEventListener('click', () => {
-        const invalid = fieldsOf(steps[current]).find((field) => !field.checkValidity());
+    const validateStep = (index) => {
+        const invalid = fieldsOf(steps[index]).find((field) => ! field.checkValidity());
         if (invalid) {
             invalid.reportValidity();
-            return;
+            invalid.focus();
+            return false;
         }
-        show(Math.min(steps.length - 1, current + 1));
+        return true;
+    };
+
+    prev?.addEventListener('click', (event) => {
+        event.preventDefault();
+        show(current - 1);
     });
-    finish?.addEventListener('click', () => {
-        steps.forEach((step) => {
-            step.hidden = false;
-        });
-        const invalid = fieldsOf(form).find((field) => !field.checkValidity());
-        if (invalid) {
-            const step = invalid.closest('[data-ficha-step]');
-            const index = Math.max(0, steps.indexOf(step));
-            show(index);
-            invalid.reportValidity();
+
+    next?.addEventListener('click', (event) => {
+        event.preventDefault();
+        if (! validateStep(current)) {
             return;
         }
-        form.requestSubmit();
+        show(current + 1);
+    });
+
+    // type=submit: si está visible, el navegador envía; este handler solo valida.
+    finish?.addEventListener('click', (event) => {
+        if (! validateStep(current)) {
+            event.preventDefault();
+        }
+    });
+
+    dots.forEach((dot, index) => {
+        dot.style.cursor = 'pointer';
+        dot.addEventListener('click', () => {
+            if (index > current) {
+                for (let i = current; i < index; i += 1) {
+                    if (! validateStep(i)) {
+                        show(i);
+                        return;
+                    }
+                }
+            }
+            show(index);
+        });
     });
 
     show(0);
@@ -1160,114 +1197,3 @@ document.querySelectorAll('[data-copy-guardian-link]').forEach((button) => {
         }
     });
 });
-
-/**
- * Wizard de editar ficha en Operación ([data-ficha-steps]).
- * Sin esto, "Siguiente" / "Anterior" / "Finalizar" no hacen nada.
- */
-function initWorkspaceFichaSteps() {
-    document.querySelectorAll('form[data-ficha-steps]').forEach((form) => {
-        if (form.dataset.fichaStepsReady === '1') {
-            return;
-        }
-        form.dataset.fichaStepsReady = '1';
-
-        const steps = [...form.querySelectorAll('[data-ficha-step]')];
-        const dots = [...form.querySelectorAll('[data-ficha-dot]')];
-        const prev = form.querySelector('[data-ficha-prev]');
-        const next = form.querySelector('[data-ficha-next]');
-        const finish = form.querySelector('[data-ficha-finish]');
-        if (! steps.length) {
-            return;
-        }
-
-        let index = 0;
-
-        const show = (i) => {
-            index = Math.max(0, Math.min(i, steps.length - 1));
-            steps.forEach((step, n) => {
-                step.hidden = n !== index;
-            });
-            dots.forEach((dot, n) => {
-                dot.classList.toggle('is-current', n === index);
-                dot.classList.toggle('is-done', n < index);
-            });
-            if (prev) {
-                prev.hidden = index === 0;
-            }
-            if (next) {
-                next.hidden = index >= steps.length - 1;
-            }
-            if (finish) {
-                finish.hidden = index < steps.length - 1;
-            }
-        };
-
-        const validateCurrent = () => {
-            const fields = steps[index].querySelectorAll('input, select, textarea');
-            for (const field of fields) {
-                if (field.disabled || field.type === 'hidden') {
-                    continue;
-                }
-                if (! field.checkValidity()) {
-                    field.reportValidity();
-                    field.focus();
-                    return false;
-                }
-            }
-            return true;
-        };
-
-        prev?.addEventListener('click', (event) => {
-            event.preventDefault();
-            show(index - 1);
-        });
-
-        next?.addEventListener('click', (event) => {
-            event.preventDefault();
-            if (! validateCurrent()) {
-                return;
-            }
-            show(index + 1);
-        });
-
-        finish?.addEventListener('click', (event) => {
-            event.preventDefault();
-            if (! validateCurrent()) {
-                return;
-            }
-            if (typeof form.requestSubmit === 'function') {
-                form.requestSubmit();
-            } else {
-                form.submit();
-            }
-        });
-
-        dots.forEach((dot, n) => {
-            dot.setAttribute('role', 'button');
-            dot.tabIndex = 0;
-            const go = () => {
-                if (n > index) {
-                    for (let i = index; i < n; i += 1) {
-                        show(i);
-                        if (! validateCurrent()) {
-                            return;
-                        }
-                    }
-                }
-                show(n);
-            };
-            dot.addEventListener('click', go);
-            dot.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    go();
-                }
-            });
-        });
-
-        show(0);
-    });
-}
-
-initWorkspaceFichaSteps();
