@@ -1160,3 +1160,114 @@ document.querySelectorAll('[data-copy-guardian-link]').forEach((button) => {
         }
     });
 });
+
+/**
+ * Wizard de editar ficha en Operación ([data-ficha-steps]).
+ * Sin esto, "Siguiente" / "Anterior" / "Finalizar" no hacen nada.
+ */
+function initWorkspaceFichaSteps() {
+    document.querySelectorAll('form[data-ficha-steps]').forEach((form) => {
+        if (form.dataset.fichaStepsReady === '1') {
+            return;
+        }
+        form.dataset.fichaStepsReady = '1';
+
+        const steps = [...form.querySelectorAll('[data-ficha-step]')];
+        const dots = [...form.querySelectorAll('[data-ficha-dot]')];
+        const prev = form.querySelector('[data-ficha-prev]');
+        const next = form.querySelector('[data-ficha-next]');
+        const finish = form.querySelector('[data-ficha-finish]');
+        if (! steps.length) {
+            return;
+        }
+
+        let index = 0;
+
+        const show = (i) => {
+            index = Math.max(0, Math.min(i, steps.length - 1));
+            steps.forEach((step, n) => {
+                step.hidden = n !== index;
+            });
+            dots.forEach((dot, n) => {
+                dot.classList.toggle('is-current', n === index);
+                dot.classList.toggle('is-done', n < index);
+            });
+            if (prev) {
+                prev.hidden = index === 0;
+            }
+            if (next) {
+                next.hidden = index >= steps.length - 1;
+            }
+            if (finish) {
+                finish.hidden = index < steps.length - 1;
+            }
+        };
+
+        const validateCurrent = () => {
+            const fields = steps[index].querySelectorAll('input, select, textarea');
+            for (const field of fields) {
+                if (field.disabled || field.type === 'hidden') {
+                    continue;
+                }
+                if (! field.checkValidity()) {
+                    field.reportValidity();
+                    field.focus();
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        prev?.addEventListener('click', (event) => {
+            event.preventDefault();
+            show(index - 1);
+        });
+
+        next?.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (! validateCurrent()) {
+                return;
+            }
+            show(index + 1);
+        });
+
+        finish?.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (! validateCurrent()) {
+                return;
+            }
+            if (typeof form.requestSubmit === 'function') {
+                form.requestSubmit();
+            } else {
+                form.submit();
+            }
+        });
+
+        dots.forEach((dot, n) => {
+            dot.setAttribute('role', 'button');
+            dot.tabIndex = 0;
+            const go = () => {
+                if (n > index) {
+                    for (let i = index; i < n; i += 1) {
+                        show(i);
+                        if (! validateCurrent()) {
+                            return;
+                        }
+                    }
+                }
+                show(n);
+            };
+            dot.addEventListener('click', go);
+            dot.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    go();
+                }
+            });
+        });
+
+        show(0);
+    });
+}
+
+initWorkspaceFichaSteps();

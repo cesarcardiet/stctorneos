@@ -10549,14 +10549,18 @@ html:has(.stc-body),
 
 .ws-ficha-edit {
     display: grid;
-    gap: 1rem;
+    gap: 1.1rem;
+    width: 100%;
+    max-width: 960px;
+    margin: 0 auto;
     padding-bottom: 1.5rem;
 }
 
 .ws-ficha-steps {
     display: grid;
     gap: 1rem;
-    max-width: 820px;
+    width: 100%;
+    max-width: none;
 }
 
 .ws-ficha-stepper {
@@ -10572,13 +10576,15 @@ html:has(.stc-body),
     display: flex;
     align-items: center;
     gap: .45rem;
-    min-height: 2.4rem;
-    padding: .35rem .7rem;
+    min-height: 2.55rem;
+    padding: .4rem .75rem;
     border: 1px solid rgba(0, 213, 255, .16);
     border-radius: 999px;
     color: var(--stc-muted);
     font-size: .78rem;
     font-weight: 800;
+    cursor: pointer;
+    user-select: none;
 }
 
 .ws-ficha-stepper li span {
@@ -10601,6 +10607,24 @@ html:has(.stc-body),
 .ws-ficha-stepper li.is-done span {
     background: linear-gradient(135deg, rgba(0, 107, 255, .94), rgba(0, 213, 255, .82));
     color: #fff;
+}
+
+.ws-ficha-panel {
+    width: 100%;
+}
+
+.ws-ficha-panel-head {
+    margin-bottom: .85rem;
+}
+
+.ws-ficha-panel-head h3 {
+    margin: 0 0 .25rem;
+}
+
+.ws-ficha-panel-head p {
+    margin: 0;
+    color: var(--stc-muted);
+    font-size: .88rem;
 }
 
 .ws-ficha-docs-visual {
@@ -10641,8 +10665,26 @@ html:has(.stc-body),
 
 .ws-ficha-step-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: .6rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    width: 100%;
+    margin-top: .15rem;
+    padding: .85rem 1rem;
+    border: 1px solid rgba(0, 213, 255, .18);
+    border-radius: 16px;
+    background: rgba(2, 10, 24, .72);
+}
+
+.ws-ficha-step-actions .ws-ficha-step-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem;
+    margin-left: auto;
+}
+
+.ws-ficha-step-actions .ws-btn {
+    min-width: 7.5rem;
 }
 
 .ws-ficha-hero {

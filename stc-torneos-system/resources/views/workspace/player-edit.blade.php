@@ -225,8 +225,10 @@
 
             <div class="ws-ficha-step-actions">
                 <button type="button" class="ws-btn ghost" data-ficha-prev hidden>Anterior</button>
-                <button type="button" class="ws-btn" data-ficha-next>Siguiente</button>
-                <button type="button" class="ws-btn" data-ficha-finish hidden>Finalizar</button>
+                <div class="ws-ficha-step-nav">
+                    <button type="button" class="ws-btn" data-ficha-next>Siguiente</button>
+                    <button type="submit" class="ws-btn" data-ficha-finish hidden>Guardar ficha</button>
+                </div>
             </div>
         </form>
 
