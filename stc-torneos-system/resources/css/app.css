@@ -16888,19 +16888,58 @@ button.ws-doc-thumb.is-file {
     text-align: center;
 }
 
-.lv-score img {
+.lv-club {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .35rem;
+    min-width: 0;
+    text-align: center;
+}
+
+.lv-score img,
+.lv-side-head img,
+.lv-incident-team img {
+    display: block;
     width: 64px;
     height: 64px;
+    margin: 0 auto;
     object-fit: contain;
 }
 
 .lv-score strong {
     display: block;
-    margin-top: .35rem;
+    margin: 0;
     font-size: .72rem;
     font-weight: 800;
     letter-spacing: .03em;
     text-transform: uppercase;
+}
+
+.lv-side-head {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    margin-bottom: .35rem;
+    text-align: center;
+}
+
+.lv-side-head img,
+.lv-incident-team img {
+    width: 42px;
+    height: 42px;
+}
+
+.lv-incident-team {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem;
+    min-width: 7rem;
+    padding: .45rem .6rem;
+    text-align: center;
 }
 
 .lv-score > b {
@@ -17020,7 +17059,8 @@ button.ws-doc-thumb.is-file {
     overflow: auto;
 }
 
-.lv-sides > div > span {
+.lv-sides > div > span,
+.lv-side-head span {
     font-size: .68rem;
     font-weight: 800;
     letter-spacing: .03em;

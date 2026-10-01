@@ -68,12 +68,12 @@
     <p class="lv-meta">{{ $category->name }}@if ($match->field?->name) · {{ $match->field->name }}@endif</p>
 
     <div class="lv-score">
-        <div>
+        <div class="lv-club">
             <img src="{{ $match->homeTeam?->shieldUrl() }}" alt="">
             <strong>{{ $match->homeTeam?->name }}</strong>
         </div>
         <b data-ws-score-text>{{ $homeScore }} - {{ $awayScore }}</b>
-        <div>
+        <div class="lv-club">
             <img src="{{ $match->awayTeam?->shieldUrl() }}" alt="">
             <strong>{{ $match->awayTeam?->name }}</strong>
         </div>
@@ -119,7 +119,10 @@
         <div class="lv-sides" data-live-sides>
             @foreach ($liveSides as $side)
                 <div data-live-side data-team-id="{{ $side['team']->id }}">
-                    <span>{{ $side['team']->name }}</span>
+                    <div class="lv-side-head">
+                        <img src="{{ $side['team']->shieldUrl() }}" alt="">
+                        <span>{{ $side['team']->name }}</span>
+                    </div>
                     @forelse ($side['players'] as $player)
                         <button
                             type="button"
@@ -155,7 +158,10 @@
         <div class="lv-incidents" data-live-incidents hidden>
             <div class="lv-incident-teams">
                 @foreach ($liveSides as $side)
-                    <button type="button" data-live-incident-team data-team-id="{{ $side['team']->id }}">{{ $side['team']->name }}</button>
+                    <button type="button" class="lv-incident-team" data-live-incident-team data-team-id="{{ $side['team']->id }}">
+                        <img src="{{ $side['team']->shieldUrl() }}" alt="">
+                        <span>{{ $side['team']->name }}</span>
+                    </button>
                 @endforeach
             </div>
             @foreach ($incidentKinds as $value => $label)
