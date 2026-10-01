@@ -98,17 +98,40 @@
         </article>
 
         <article class="ws-card">
-            <p class="stc-eyebrow">Plantel ({{ $team->players_count }})</p>
+            <p class="stc-eyebrow">Plantel ({{ $team->players->count() }})</p>
+            <p class="ws-muted">Cada fila es un jugador. Un solo estado: falta el tutor, aprobación de operación, o habilitado.</p>
+            @if ($rosterLockReason ?? null)
+                <div class="ws-alert">{{ $rosterLockReason }}</div>
+            @endif
+            @if ($canManageRoster ?? false)
+                <form class="ws-form" method="post" action="{{ route('workspace.categories.players.store', $category) }}">
+                    @csrf
+                    <input type="hidden" name="team_id" value="{{ $team->id }}">
+                    <div class="ws-setup-grid">
+                        <label>Apellido <input type="text" name="last_name" value="{{ old('last_name') }}" required></label>
+                        <label>Nombre <input type="text" name="first_name" value="{{ old('first_name') }}" required></label>
+                        <label>DNI <input type="text" name="document_number" value="{{ old('document_number') }}"></label>
+                        <label>Tutor <input type="text" name="guardian_name" value="{{ old('guardian_name') }}" placeholder="Nombre del padre o la madre"></label>
+                        <label>Tel. tutor <input type="text" name="guardian_phone" value="{{ old('guardian_phone') }}"></label>
+                        <label>Email tutor <input type="email" name="guardian_email" value="{{ old('guardian_email') }}" placeholder="Si lo cargás, se envía el enlace"></label>
+                    </div>
+                    <div class="ws-form-actions">
+                        <button type="submit" class="ws-btn">Agregar jugador</button>
+                    </div>
+                </form>
+            @endif
             <div class="ws-list">
-                @foreach ($team->players as $player)
+                @forelse ($team->players as $player)
                     <a class="ws-list-row" href="{{ route('workspace.categories.players.show', [$category, $player]) }}">
                         <div>
                             <strong>{{ strtoupper($player->last_name) }} {{ $player->first_name }}</strong>
-                            <span>{{ $player->statusLabel() }} · {{ $player->guardian?->name ?: 'sin tutor' }}</span>
+                            <span>{{ $player->rosterPhaseLabel() }}@if ($player->guardianDisplayName()) · Tutor: {{ $player->guardianDisplayName() }}@endif</span>
                         </div>
                         <b>›</b>
                     </a>
-                @endforeach
+                @empty
+                    <p class="ws-muted">Todavía no hay jugadores en este equipo.</p>
+                @endforelse
             </div>
         </article>
     </section>

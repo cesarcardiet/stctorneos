@@ -99,7 +99,6 @@ class Tournament extends Model
             'timezone' => 'zona horaria',
             'starts_at' => 'fecha de inicio',
             'ends_at' => 'fecha de finalización',
-            'contact_name' => 'contacto',
             'contact_email' => 'email de contacto',
             'description' => 'descripción',
         ];
@@ -161,6 +160,20 @@ class Tournament extends Model
         $path = $this->resolvedLogoPath();
 
         return str_starts_with($path, 'http') ? $path : asset($path);
+    }
+
+    public function rulesFileUrl(): ?string
+    {
+        $path = trim((string) $this->rules_url);
+        if ($path === '') {
+            return null;
+        }
+
+        if (str_starts_with($path, 'http://') || str_starts_with($path, 'https://')) {
+            return $path;
+        }
+
+        return asset($path);
     }
 
     public function applyLogoFromRequest(Request $request): bool

@@ -18,7 +18,7 @@
     <header class="player-doc-review-head">
         <div>
             <h3>Aprobación y habilitación</h3>
-            <p class="ws-muted">Revisá los archivos con <strong>Ver</strong>. Cuando esté todo en orden, usá un solo botón para aprobar la documentación completa.</p>
+            <p class="ws-muted">Revisá los archivos con <strong>Ver</strong>. Operación aprueba la ficha de una vez: no hay que ir documento por documento.</p>
         </div>
         <div class="player-doc-review-summary">
             <span @class(['admin-status', 'is-approved' => $docsComplete, 'is-observed' => ! $docsComplete])>{{ $player->documentationSummary() }}</span>
@@ -28,20 +28,20 @@
 
     @if ($canReview)
         <div class="player-doc-approve-all">
-            <form method="post" action="{{ route('admin.players.documents.approve-all', $player) }}" data-confirm="¿Aprobar toda la documentación cargada de {{ $player->fullName() }}?">
+            <form method="post" action="{{ route('admin.players.documents.approve-all', $player) }}" data-confirm="¿Aprobar la ficha completa de {{ $player->fullName() }}? Si la documentación está completa, queda habilitado para jugar.">
                 @csrf
                 @method('PATCH')
-                <button type="submit" class="primary-action" @disabled($pendingReviewCount === 0)>
-                    Aprobar toda la documentación
+                <button type="submit" class="primary-action" @disabled($pendingReviewCount === 0 && $player->status === 'enabled')">
+                    Aprobar ficha completa
                     @if ($pendingReviewCount > 0)
                         ({{ $pendingReviewCount }})
                     @endif
                 </button>
             </form>
             @if ($pendingReviewCount === 0)
-                <p class="ws-muted">No hay documentos pendientes de aprobación, o faltan archivos por cargar.</p>
+                <p class="ws-muted">No hay documentos de operación pendientes. Las firmas las confirma el tutor, no se aprueban una por una.</p>
             @else
-                <p class="ws-muted">Se aprueban juntos DNI, cobertura, foto y demás archivos revisables. Las firmas del tutor no se tocan.</p>
+                <p class="ws-muted">Un solo paso de operación: se aprueba todo lo cargado y, si está completa, se habilita. El tutor confirma por su lado.</p>
             @endif
         </div>
     @endif
@@ -152,7 +152,7 @@
                     </button>
                 </form>
                 @unless ($docsComplete)
-                    <p class="ws-muted">Primero aprobá la documentación (botón de arriba). Después habilitás al jugador.</p>
+                    <p class="ws-muted">Si falta archivo o la firma del tutor, la ficha no se habilita todavía. No hace falta aprobar parte por parte.</p>
                 @endunless
             @else
                 <p class="system-alert tone-green">Jugador habilitado para jugar.</p>

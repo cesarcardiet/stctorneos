@@ -52,15 +52,40 @@
 
 <x-ws-modal id="rounds" title="Fechas">
     <x-ws-form :action="route('workspace.categories.settings.update', $category)" section="rounds">
-        @foreach (\App\Support\CategoryWorkspace::editableRounds($ws) as $index => $round)
-            <label>
-                Nombre
-                <input type="hidden" name="rounds[{{ $index }}][old]" value="{{ $round }}">
-                <input type="text" name="rounds[{{ $index }}][name]" value="{{ $round }}">
-            </label>
-        @endforeach
-        <label>Nueva fecha <input type="text" name="rounds[{{ count(\App\Support\CategoryWorkspace::editableRounds($ws)) }}][name]" placeholder="Octavos de final"></label>
-        <p class="ws-muted">Podés dejar Fecha 1, 2, 3 o cambiarla a Octavos, Cuartos, Semifinal o Final.</p>
+        @php
+            $existingRoundNames = $category->matches()
+                ->pluck('round')
+                ->map(fn ($round) => \App\Support\CategoryWorkspace::normalizeRound($round))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all();
+            $roundList = \App\Support\CategoryWorkspace::editorMatchdays($ws, $existingRoundNames);
+            $hasCup = \App\Support\CategoryWorkspace::hasGoldSilverBronze($ws, $existingRoundNames);
+        @endphp
+        <label class="ws-check">
+            <input type="hidden" name="cup_format" value="none">
+            <input type="checkbox" name="cup_format" value="oro_plata_bronce" @checked($hasCup)>
+            Este torneo tiene Copa de Oro, Plata y Bronce
+        </label>
+        <p class="ws-muted">Si está tildado, en Fixture aparecen Final Oro, Final Plata y Final Bronce. Si no, no se muestran.</p>
+        @forelse ($roundList as $index => $round)
+            <div class="ws-inline">
+                <label>
+                    Fecha
+                    <input type="hidden" name="rounds[{{ $index }}][old]" value="{{ $round }}">
+                    <input type="text" name="rounds[{{ $index }}][name]" value="{{ $round }}">
+                </label>
+                <label class="ws-check">
+                    <input type="checkbox" name="rounds[{{ $index }}][remove]" value="1">
+                    Quitar
+                </label>
+            </div>
+        @empty
+            <p class="ws-muted">Todavía no hay fechas de este torneo.</p>
+        @endforelse
+        <label>Agregar fecha <input type="text" name="rounds[{{ count($roundList) }}][name]" placeholder="Fecha {{ count($roundList) + 1 }}"></label>
+        <p class="ws-muted">Agregá o quitá solo las fechas de esta categoría. Cada torneo se arma distinto.</p>
     </x-ws-form>
 </x-ws-modal>
 

@@ -120,6 +120,13 @@ class RosterShareService
             ]);
         }
 
+        Player::assertUniqueOnTeam(
+            (int) $team->id,
+            $firstName,
+            $lastName,
+            $data['document_number'] ?? null
+        );
+
         $player = Player::create([
             'team_id' => $team->id,
             'first_name' => $firstName,

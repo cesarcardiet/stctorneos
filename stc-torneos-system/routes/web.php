@@ -210,7 +210,9 @@ Route::middleware(['auth', 'permission:dashboard.view'])->prefix('operacion')->n
     Route::get('/', [WorkspaceGateController::class, 'home'])->name('home');
     Route::post('/torneos', [WorkspaceGateController::class, 'storeTournament'])->name('tournaments.store');
     Route::get('/mi-club', [WorkspaceGateController::class, 'myClub'])->name('my-club');
+    Route::get('/torneos/crear', [TournamentController::class, 'createFromWorkspace'])->name('tournaments.create');
     Route::get('/torneos/{tournament}', [WorkspaceGateController::class, 'tournament'])->name('tournaments.show');
+    Route::get('/torneos/{tournament}/editar', [TournamentController::class, 'editFromWorkspace'])->name('tournaments.edit');
     Route::post('/torneos/{tournament}/categorias', [WorkspaceGateController::class, 'storeCategory'])->name('tournaments.categories.store');
     Route::patch('/torneos/{tournament}/categorias/orden', [WorkspaceGateController::class, 'reorderCategories'])->name('tournaments.categories.reorder');
     Route::patch('/torneos/{tournament}/categorias/{category}', [WorkspaceGateController::class, 'updateCategory'])->name('tournaments.categories.update');
@@ -286,6 +288,7 @@ Route::middleware(['auth', 'permission:dashboard.view'])->prefix('operacion')->n
     Route::delete('/categorias/{category}/partidos', [WorkspaceActionController::class, 'destroyAllMatches'])->name('categories.matches.destroy-all');
     Route::patch('/categorias/{category}/partidos/{match}/horario', [WorkspaceActionController::class, 'updateMatchSchedule'])->name('categories.matches.schedule');
     Route::patch('/categorias/{category}/partidos/{match}/resultado', [WorkspaceActionController::class, 'saveMatchResult'])->name('categories.matches.result');
+    Route::post('/categorias/{category}/partidos/{match}/alineacion', [WorkspaceActionController::class, 'storeMatchLineup'])->name('categories.matches.lineup');
     Route::post('/categorias/{category}/partidos/{match}/eventos', [WorkspaceActionController::class, 'addSheetEvent'])->name('categories.matches.events');
     Route::post('/categorias/{category}/partidos/{match}/incidencias', [WorkspaceActionController::class, 'addSheetIncident'])->name('categories.matches.incidents');
     Route::delete('/categorias/{category}/partidos/{match}/incidencias/{incident}', [WorkspaceActionController::class, 'destroySheetIncident'])->name('categories.matches.incidents.destroy');

@@ -1,10 +1,17 @@
-<x-layouts.stc
-    :title="$title.' | STC Torneos'"
-    active="Torneos"
+@php
+    $inWorkspace = $inWorkspace ?? false;
+    $cancelUrl = $cancelUrl ?? route('admin.tournaments.index');
+@endphp
+
+<x-dynamic-component
+    :component="$inWorkspace ? 'layouts.workspace' : 'layouts.stc'"
+    :title="$inWorkspace ? $title : $title.' | STC Torneos'"
+    :active="$inWorkspace ? 'Categorías' : 'Torneos'"
     :heading="$title"
     subheading="Configuración completa del torneo, sedes, fechas y visibilidad pública."
+    :tournament="$tournament"
 >
-    <a class="back-link" href="{{ route('admin.tournaments.index') }}">← Volver al listado</a>
+    <a class="back-link" href="{{ $cancelUrl }}">← Volver al listado</a>
 
     @if ($errors->any())
         <div class="system-alert">Revisá los campos marcados antes de guardar.</div>
@@ -61,7 +68,14 @@
                     @endforeach
                 </select>
             </label>
-            <label class="span-2">Reglamento / URL <input name="rules_url" value="{{ old('rules_url', $tournament->rules_url) }}" placeholder="https://stctorneos.demo/reglamento"></label>
+            <label class="span-2">Reglamento
+                <input type="file" name="rules_file" accept="application/pdf,image/png,image/jpeg,image/webp,image/gif">
+                @if ($tournament->rulesFileUrl())
+                    <small><a href="{{ $tournament->rulesFileUrl() }}" target="_blank" rel="noopener">Ver archivo actual</a></small>
+                @else
+                    <small>PDF o imagen.</small>
+                @endif
+            </label>
         </div>
 
         <h3>Información</h3>
@@ -72,14 +86,12 @@
 
         <h3>Contacto</h3>
         <div class="ficha-row">
-            <label>Contacto <input name="contact_name" value="{{ old('contact_name', $tournament->contact_name) }}" placeholder="Mesa Central STC"></label>
-            <label>Email <input type="email" name="contact_email" value="{{ old('contact_email', $tournament->contact_email) }}" placeholder="operacion@stctorneos.demo"></label>
-            <label class="span-2">Teléfono <input name="contact_phone" value="{{ old('contact_phone', $tournament->contact_phone) }}" placeholder="+54 9 11 5555-2026"></label>
+            <label class="span-2">Correo <input type="email" name="contact_email" value="{{ old('contact_email', $tournament->contact_email) }}" placeholder="operacion@stctorneos.demo"></label>
         </div>
 
         <div class="admin-figma-form-actions">
-            <a class="admin-figma-cancel" href="{{ route('admin.tournaments.index') }}">CANCELAR</a>
+            <a class="admin-figma-cancel" href="{{ $cancelUrl }}">CANCELAR</a>
             <button class="ficha-save" type="submit">Guardar torneo</button>
         </div>
     </form>
-</x-layouts.stc>
+</x-dynamic-component>

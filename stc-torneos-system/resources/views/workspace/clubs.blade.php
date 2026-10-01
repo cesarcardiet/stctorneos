@@ -33,26 +33,73 @@
             <p class="stc-eyebrow">Nueva delegación / club</p>
             <p class="ws-muted">El club es del torneo. Los equipos de todas las categorías quedan vinculados a esta delegación.</p>
             <form
-                class="ws-inline-add ws-club-add"
+                class="ws-form"
                 method="post"
                 action="{{ $clubStoreUrl }}"
                 enctype="multipart/form-data"
                 data-ws-known-logo-url="{{ route('workspace.clubs.known-logo') }}"
             >
                 @csrf
-                <input type="text" name="name" placeholder="Nombre del club, ej: San Lorenzo" required>
-                <select name="country_code">
-                    <option value="">País</option>
-                    @foreach (\App\Support\Countries::grouped() as $region => $codes)
-                        <optgroup label="{{ $region }}">
-                            @foreach ($codes as $code)
-                                <option value="{{ $code }}" @selected($code === 'AR')>{{ \App\Support\Countries::emoji($code) }} {{ \App\Support\Countries::name($code) }}</option>
-                            @endforeach
-                        </optgroup>
-                    @endforeach
-                </select>
-                <button type="submit" class="ws-btn">Añadir club</button>
-                <x-ws-shield-field compact class="ws-team-add-shield" />
+                <div class="ws-team-identity">
+                    <x-ws-shield-field compact />
+                    <div class="ws-setup-grid">
+                        <label>Nombre
+                            <input type="text" name="name" value="{{ old('name') }}" placeholder="Nombre del club, ej: San Lorenzo" required>
+                        </label>
+                        <label>País
+                            <select name="country_code">
+                                <option value="">Elegí un país</option>
+                                @foreach (\App\Support\Countries::grouped() as $region => $codes)
+                                    <optgroup label="{{ $region }}">
+                                        @foreach ($codes as $code)
+                                            <option value="{{ $code }}" @selected(old('country_code', 'AR') === $code)>{{ \App\Support\Countries::emoji($code) }} {{ \App\Support\Countries::name($code) }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                @endforeach
+                            </select>
+                        </label>
+                        <label>Ciudad
+                            <input type="text" name="city" value="{{ old('city') }}" placeholder="Ej: Buenos Aires">
+                        </label>
+                    </div>
+                </div>
+                <p class="stc-eyebrow">Delegado</p>
+                <p class="ws-muted">Opcional. Si lo cargás ahora, queda asignado al club y se arma el acceso por WhatsApp.</p>
+                <div class="ws-setup-grid">
+                    <label>Nombre y apellido
+                        <input type="text" name="delegate_name" value="{{ old('delegate_name') }}" placeholder="Ej: Ana Delegada">
+                    </label>
+                    <label>Correo
+                        <input type="email" name="delegate_email" value="{{ old('delegate_email') }}" placeholder="ana@club.com">
+                    </label>
+                    <label>Teléfono (WhatsApp)
+                        <input type="text" name="delegate_phone" value="{{ old('delegate_phone') }}" placeholder="+54 9 11 ...">
+                    </label>
+                </div>
+                <p class="stc-eyebrow">Categorías</p>
+                @if ($categories->isEmpty())
+                    <p class="ws-muted">Este torneo todavía no tiene categorías. Creálas en el torneo y después elegilas acá.</p>
+                @else
+                    @php
+                        $selectedCategories = collect(old('category_ids', $category ? [$category->id] : []))
+                            ->map(fn ($id) => (int) $id);
+                    @endphp
+                    <p class="ws-muted">Elegí una o varias categorías ya creadas. El club queda con un equipo en cada una.</p>
+                    <div class="ws-cat-checks">
+                        @foreach ($categories as $item)
+                            <label class="ws-cat-check">
+                                <input type="checkbox" name="category_ids[]" value="{{ $item->id }}" @checked($selectedCategories->contains((int) $item->id))>
+                                <span>{{ $item->name }}</span>
+                            </label>
+                        @endforeach
+                    </div>
+                    <label>Nombre del equipo
+                        <input type="text" name="team_name" value="{{ old('team_name') }}" placeholder="Si lo dejás vacío, usa el nombre del club">
+                    </label>
+                @endif
+                <div class="ws-form-actions">
+                    <button type="submit" class="ws-btn">Añadir club</button>
+                </div>
             </form>
         </article>
         @if ($clubs->isNotEmpty() && $categories->isNotEmpty())
@@ -78,7 +125,7 @@
                 </form>
             </article>
         @elseif ($categories->isEmpty())
-            <p class="ws-muted">Primero creá una categoría en este torneo para poder sumarle equipos.</p>
+            <p class="ws-muted">Primero creá una categoría en este torneo. Después la elegís al añadir el club.</p>
         @else
             <p class="ws-muted">Primero añadí un club. Después le sumás el equipo a la categoría.</p>
         @endif

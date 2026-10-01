@@ -203,8 +203,8 @@
                 </label>
                 <label>Fecha
                     <select name="round" required>
-                        @foreach ($rounds as $round)
-                            <option value="{{ $round }}" @selected($round === 'Fecha 1')>{{ $round }}</option>
+                        @foreach ($formRounds ?? $rounds as $round)
+                            <option value="{{ $round }}" @selected($round === ($formRounds[0] ?? $rounds[0] ?? 'Fecha 1'))>{{ $round }}</option>
                         @endforeach
                     </select>
                 </label>

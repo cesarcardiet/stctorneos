@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Registro por invitación | STC Torneos</title>
-    @vite(['resources/css/app.css'])
+    @include('partials.pwa-head')
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="stc-login">
     <main class="figma-login-wrap">

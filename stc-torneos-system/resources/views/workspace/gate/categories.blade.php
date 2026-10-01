@@ -33,7 +33,7 @@
             <a class="ws-tourney-back" href="{{ route('workspace.home') }}">← Torneos</a>
             <div class="ws-tourney-bar-actions">
                 @if ($canEdit)
-                    <a class="stc-pill-btn ghost" href="{{ route('admin.tournaments.edit', $tournament) }}">Editar torneo</a>
+                    <a class="stc-pill-btn ghost" href="{{ route('workspace.tournaments.edit', $tournament) }}">Editar torneo</a>
                     <button type="button" class="stc-pill-btn" data-ws-open="new-category">+ Categoría</button>
                 @endif
                 @if (! empty($canDeleteTournaments))
@@ -74,6 +74,7 @@
         @if ($categories->isNotEmpty())
             <div class="ws-tourney-filters">
                 <div class="ws-tourney-filter-group" data-ws-cat-branch>
+                    <span class="ws-filter-kicker">Rama</span>
                     <button type="button" class="ws-chip is-on" data-branch="">Todas</button>
                     @if (($branchCounts['Masculina'] ?? 0) > 0)
                         <button type="button" class="ws-chip" data-branch="Masculina">Masc</button>
@@ -86,6 +87,7 @@
                     @endif
                 </div>
                 <div class="ws-tourney-filter-group ws-tourney-az">
+                    <span class="ws-filter-kicker">Letra</span>
                     @include('workspace.partials.category-az', ['letters' => $letters ?? []])
                 </div>
                 <div class="ws-tourney-filter-meta">

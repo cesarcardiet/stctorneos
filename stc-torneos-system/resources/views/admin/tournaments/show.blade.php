@@ -17,7 +17,7 @@
         <div>
             <h2>{{ $tournament->name }}</h2>
             <div class="hero-buttons">
-                <a href="{{ route('admin.tournaments.edit', $tournament) }}">Editar</a>
+                <a href="{{ route('workspace.tournaments.edit', $tournament) }}">Editar</a>
                 @if (auth()->user()?->isSuperAdmin())
                     <form method="post" action="{{ route('admin.tournaments.duplicate', $tournament) }}">
                         @csrf
@@ -113,13 +113,18 @@
                 </div>
                 <div class="permission-box">
                     <strong>Contacto</strong>
-                    <span>{{ $tournament->contact_name ?? 'Sin contacto' }}</span>
-                    <span>{{ $tournament->contact_email ?? $tournament->contact_phone ?? 'Sin datos' }}</span>
+                    <span>{{ $tournament->contact_email ?: 'Sin correo' }}</span>
                 </div>
                 <div class="permission-box">
                     <strong>Zona horaria</strong>
                     <span>{{ $tournament->timezone }}</span>
-                    <span>{{ $tournament->rules_url ? 'Reglamento configurado' : 'Sin reglamento' }}</span>
+                    <span>
+                        @if ($tournament->rulesFileUrl())
+                            <a href="{{ $tournament->rulesFileUrl() }}" target="_blank" rel="noopener">Ver reglamento</a>
+                        @else
+                            Sin reglamento
+                        @endif
+                    </span>
                 </div>
                 <div class="permission-box">
                     <strong>Información</strong>

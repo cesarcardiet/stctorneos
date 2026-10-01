@@ -75,14 +75,11 @@ class CategoryController extends Controller
             ->orderBy('scheduled_at')
             ->get();
 
-        $workspace = $category->workspace();
-        $phases = CategoryWorkspace::phaseNames($workspace);
-        $existingRounds = $matches
-            ->map(fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage))
-            ->filter()
-            ->unique()
-            ->values();
-        $rounds = CategoryWorkspace::roundOptions($workspace, $existingRounds->all());
+        $filters = $this->competitionFilters($category, $matches);
+        $workspace = $filters['workspace'];
+        $phaseNames = $filters['phaseNames'];
+        $phases = $filters['phases'];
+        $rounds = $filters['rounds'];
 
         $selectedPhase = $request->string('phase', 'all')->toString();
         if ($selectedPhase === '') {
@@ -94,7 +91,7 @@ class CategoryController extends Controller
         $visibleMatches = $this->sortVisibleMatches(
             $matches
                 ->when($selectedPhase !== 'all', fn ($collection) => $collection->filter(
-                    fn ($match) => CategoryWorkspace::matchPhase($match, $phases) === $selectedPhase
+                    fn ($match) => CategoryWorkspace::matchPhase($match, $phaseNames) === $selectedPhase
                 ))
                 ->when($selectedRound !== 'all', fn ($collection) => $collection->filter(
                     fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage) === $selectedRound
@@ -123,6 +120,7 @@ class CategoryController extends Controller
             'visibleMatches' => $visibleMatches,
             'phases' => $phases,
             'rounds' => $rounds,
+            'formRounds' => $filters['formRounds'],
             'selectedPhase' => $selectedPhase,
             'selectedRound' => $selectedRound,
             'dateStats' => [
@@ -158,14 +156,11 @@ class CategoryController extends Controller
             ->orderBy('scheduled_at')
             ->get();
 
-        $workspace = $category->workspace();
-        $phases = CategoryWorkspace::phaseNames($workspace);
-        $existingRounds = $matches
-            ->map(fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage))
-            ->filter()
-            ->unique()
-            ->values();
-        $rounds = CategoryWorkspace::roundOptions($workspace, $existingRounds->all());
+        $filters = $this->competitionFilters($category, $matches);
+        $workspace = $filters['workspace'];
+        $phaseNames = $filters['phaseNames'];
+        $phases = $filters['phases'];
+        $rounds = $filters['rounds'];
 
         $selectedPhase = $request->string('phase', 'all')->toString() ?: 'all';
         $selectedRound = $this->resolveGamesRoundFilter($request, $matches, $rounds);
@@ -173,7 +168,7 @@ class CategoryController extends Controller
         $visibleMatches = $this->sortVisibleMatches(
             $matches
                 ->when($selectedPhase !== 'all', fn ($collection) => $collection->filter(
-                    fn ($match) => CategoryWorkspace::matchPhase($match, $phases) === $selectedPhase
+                    fn ($match) => CategoryWorkspace::matchPhase($match, $phaseNames) === $selectedPhase
                 ))
                 ->when($selectedRound !== 'all', fn ($collection) => $collection->filter(
                     fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage) === $selectedRound
@@ -250,14 +245,11 @@ class CategoryController extends Controller
         $status = $request->string('status', 'all')->toString();
         $selectedPhase = $request->string('phase', 'all')->toString();
 
-        $workspace = $category->workspace();
-        $phases = CategoryWorkspace::phaseNames($workspace);
-        $existingRounds = $matches
-            ->map(fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage))
-            ->filter()
-            ->unique()
-            ->values();
-        $rounds = CategoryWorkspace::roundOptions($workspace, $existingRounds->all());
+        $filters = $this->competitionFilters($category, $matches);
+        $workspace = $filters['workspace'];
+        $phaseNames = $filters['phaseNames'];
+        $phases = $filters['phases'];
+        $rounds = $filters['rounds'];
         $selectedRound = $this->resolveGamesRoundFilter($request, $matches, $rounds);
 
         $visibleMatches = $matches
@@ -269,7 +261,7 @@ class CategoryController extends Controller
                 return $match->status === $status;
             }))
             ->when($selectedPhase !== 'all', fn ($collection) => $collection->filter(
-                fn ($match) => CategoryWorkspace::matchPhase($match, $phases) === $selectedPhase
+                fn ($match) => CategoryWorkspace::matchPhase($match, $phaseNames) === $selectedPhase
             ))
             ->when($selectedRound !== 'all', fn ($collection) => $collection->filter(
                 fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage) === $selectedRound
@@ -290,6 +282,7 @@ class CategoryController extends Controller
             'visibleMatches' => $visibleMatches,
             'phases' => $phases,
             'rounds' => $rounds,
+            'formRounds' => $filters['formRounds'],
             'selectedStatus' => $status,
             'selectedPhase' => $selectedPhase,
             'selectedRound' => $selectedRound,
@@ -334,19 +327,15 @@ class CategoryController extends Controller
     {
         abort_unless($this->canViewPlanillas($request->user()), 403, 'Las planillas en blanco son solo para el staff del torneo.');
         $category = $this->assertCategory($category);
-        $workspace = $category->workspace();
-        $phases = CategoryWorkspace::phaseNames($workspace);
         $allMatches = FixtureMatch::query()
             ->with(['homeTeam', 'awayTeam', 'field'])
             ->where('category_id', $category->id)
             ->orderBy('scheduled_at')
             ->get();
-        $existingRounds = $allMatches
-            ->map(fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage))
-            ->filter()
-            ->unique()
-            ->values();
-        $rounds = CategoryWorkspace::roundOptions($workspace, $existingRounds->all());
+        $filters = $this->competitionFilters($category, $allMatches);
+        $workspace = $filters['workspace'];
+        $phases = $filters['phases'];
+        $rounds = $filters['rounds'];
 
         $selectedPhase = $request->string('phase', 'all')->toString();
         if ($selectedPhase === '') {
@@ -550,6 +539,7 @@ class CategoryController extends Controller
         return view('workspace.player-view', $this->page($category, 'Jugadores', [
             'player' => $player,
             'canEdit' => $canEdit,
+            'canReview' => $this->canReviewInscriptions(auth()->user()),
             'canViewFullFicha' => $canViewFullFicha,
             'stats' => $performance->summary($player),
         ]));
@@ -617,6 +607,7 @@ class CategoryController extends Controller
             'sheet.events.teamStaff',
             'sheet.events.team.delegation',
             'sheet.incidents',
+            'lineups',
         ]);
 
         return view('workspace.match', $this->page($category, 'Clasificación', [
@@ -1000,6 +991,34 @@ class CategoryController extends Controller
         }
 
         return in_array($status, ['scheduled', 'rescheduled'], true);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, FixtureMatch>  $matches
+     * @return array{workspace: array<string, mixed>, phaseNames: list<string>, phases: list<string>, rounds: list<string>, formRounds: list<string>}
+     */
+    private function competitionFilters(Category $category, $matches): array
+    {
+        $workspace = $category->workspace();
+        $phaseNames = CategoryWorkspace::phaseNames($workspace);
+        $existingRounds = $matches
+            ->map(fn ($match) => CategoryWorkspace::normalizeRound($match->round, $match->stage))
+            ->filter()
+            ->unique()
+            ->values();
+        $existingPhases = $matches
+            ->map(fn ($match) => CategoryWorkspace::matchPhase($match, $phaseNames))
+            ->filter()
+            ->unique()
+            ->values();
+
+        return [
+            'workspace' => $workspace,
+            'phaseNames' => $phaseNames,
+            'phases' => CategoryWorkspace::phaseOptions($workspace, $existingPhases->all()),
+            'rounds' => CategoryWorkspace::roundOptions($workspace, $existingRounds->all()),
+            'formRounds' => CategoryWorkspace::formRounds($workspace, $existingRounds->all()),
+        ];
     }
 
     /**

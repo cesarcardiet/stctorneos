@@ -6,8 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\Category;
 use App\Models\Delegation;
-use App\Models\FixtureMatch;
 use App\Models\Guardian;
+use App\Models\MatchSheetEvent;
 use App\Models\Invitation;
 use App\Models\Player;
 use App\Models\PlayerDocument;
@@ -212,6 +212,12 @@ class PlayerController extends Controller
     {
         $data = $this->validatedPlayer($request);
         $this->assertTeamAccess(Team::findOrFail($data['team_id']));
+        Player::assertUniqueOnTeam(
+            (int) $data['team_id'],
+            (string) $data['first_name'],
+            (string) $data['last_name'],
+            $data['document_number'] ?? null
+        );
         $player = Player::create($data);
         $this->syncRelated($request, $player);
         $this->audit('create', $player, 'Jugador creado desde Admin Web.');
@@ -263,6 +269,13 @@ class PlayerController extends Controller
         $this->assertPlayerAccess($player);
         $data = $this->validatedPlayer($request, $player);
         $this->assertTeamAccess(Team::findOrFail($data['team_id']));
+        Player::assertUniqueOnTeam(
+            (int) $data['team_id'],
+            (string) $data['first_name'],
+            (string) $data['last_name'],
+            $data['document_number'] ?? null,
+            (int) $player->id
+        );
         $player->update($data);
         $this->syncRelated($request, $player);
         $this->audit('update', $player, 'Jugador actualizado desde Admin Web.');
@@ -302,18 +315,18 @@ class PlayerController extends Controller
         $this->assertPlayerAccess($player);
         abort_unless($request->user()?->hasPermission('players.approve'), 403);
 
-        $result = $reviews->approveAllForPlayer($player, $request->user());
+        $result = $reviews->approveCompleteFile($player, $request->user());
         $player->refresh();
 
-        if ($result['approved'] === 0) {
-            return redirect()
-                ->route('admin.players.show', [$player, 'tab' => 'aprobacion'])
-                ->with('status', 'No había documentos pendientes de aprobación (faltan archivos o ya estaban aprobados).');
-        }
-
-        $message = 'Se aprobaron '.$result['approved'].' documento(s) de '.$player->fullName().'.';
-        if ($player->documentationSummary() === 'Completa') {
-            $message .= ' La documentación quedó completa: ya podés habilitarlo para jugar.';
+        if ($result['enabled']) {
+            $message = $player->fullName().' quedó con la ficha aprobada y habilitado para jugar.';
+        } elseif ($result['approved'] === 0) {
+            $message = 'No había nada pendiente de aprobación de operación (faltan archivos o ya estaba aprobado).';
+        } else {
+            $message = 'Se aprobó la documentación de operación de '.$player->fullName().'.';
+            if ($player->status === 'awaiting_guardian') {
+                $message .= ' Todavía falta la confirmación del tutor.';
+            }
         }
 
         return redirect()
@@ -629,28 +642,42 @@ class PlayerController extends Controller
             return [];
         }
 
-        return FixtureMatch::query()
-            ->with(['homeTeam', 'awayTeam'])
-            ->where(fn ($query) => $query->where('home_team_id', $player->team_id)->orWhere('away_team_id', $player->team_id))
-            ->orderBy('scheduled_at')
-            ->limit(8)
+        return MatchSheetEvent::query()
+            ->with(['sheet.match.homeTeam', 'sheet.match.awayTeam'])
+            ->where('player_id', $player->id)
+            ->whereIn('type', ['goal', 'assist', 'yellow', 'red'])
             ->get()
-            ->map(function (FixtureMatch $match) use ($player) {
+            ->groupBy(fn (MatchSheetEvent $event) => $event->sheet?->match_id)
+            ->filter(fn ($events, $matchId) => $matchId && $events->first()?->sheet?->match)
+            ->map(function ($events) use ($player) {
+                $match = $events->first()->sheet->match;
                 $isHome = (int) $match->home_team_id === (int) $player->team_id;
                 $rival = $isHome ? $match->awayTeam : $match->homeTeam;
-                $ownScore = (int) ($isHome ? $match->home_score : $match->away_score);
-                $goals = in_array($match->status, ['finished', 'live'], true)
-                    ? ($player->position === 'Delantero' ? min(2, max(0, $ownScore)) : ($player->position === 'Mediocampista' ? min(1, $ownScore) : 0))
-                    : 0;
+                $goals = $events->where('type', 'goal')->count();
+                $assists = $events->where('type', 'assist')->count();
+                $yellows = $events->where('type', 'yellow')->count();
+                $parts = [];
+                if ($goals > 0) {
+                    $parts[] = $goals.' '.($goals === 1 ? 'gol' : 'goles');
+                }
+                if ($assists > 0) {
+                    $parts[] = $assists.' '.($assists === 1 ? 'asistencia' : 'asistencias');
+                }
+                if ($yellows > 0) {
+                    $parts[] = $yellows.' '.($yellows === 1 ? 'amarilla' : 'amarillas');
+                }
 
                 return [
                     'date' => $match->scheduled_at?->format('d M') ?? '—',
                     'rival' => $rival?->name ?? 'Rival',
                     'score' => ((int) $match->home_score).'-'.((int) $match->away_score),
-                    'events' => $goals > 0 ? $goals.' '.($goals === 1 ? 'gol' : 'goles') : 'Sin eventos',
+                    'events' => $parts !== [] ? implode(' · ', $parts) : 'Sin eventos',
                     'goals' => $goals,
                 ];
             })
+            ->sortByDesc(fn (array $row) => $row['date'])
+            ->take(8)
+            ->values()
             ->all();
     }
 }

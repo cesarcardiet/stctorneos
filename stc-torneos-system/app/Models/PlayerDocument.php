@@ -189,12 +189,11 @@ class PlayerDocument extends Model
         $this->rememberStoredFile(
             $relative,
             $originalName ?: Str::slug((string) $this->type).'.'.$ext,
-            $uploadedBy,
-            $isPlayerPhoto
+            $uploadedBy
         );
     }
 
-    private function rememberStoredFile(string $path, string $original, ?string $uploadedBy, bool $approvePhoto = false): void
+    private function rememberStoredFile(string $path, string $original, ?string $uploadedBy): void
     {
         $old = $this->file_path;
         $this->update([
@@ -202,7 +201,8 @@ class PlayerDocument extends Model
             'original_name' => $original,
             'uploaded_by_name' => $uploadedBy ?: $this->uploaded_by_name,
             'uploaded_at' => now(),
-            'status' => $approvePhoto ? 'approved' : 'pending',
+            'status' => 'approved',
+            'reviewed_at' => now(),
         ]);
 
         $this->deleteStoredFileIfOwned($old, $path);

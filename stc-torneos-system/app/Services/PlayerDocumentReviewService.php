@@ -134,6 +134,31 @@ class PlayerDocumentReviewService
         return ['approved' => $approved, 'skipped' => $skipped];
     }
 
+    /**
+     * Una sola acción de operación: aprueba lo revisable y, si la ficha queda completa, habilita.
+     *
+     * @return array{approved: int, skipped: int, enabled: bool}
+     */
+    public function approveCompleteFile(Player $player, ?User $user = null): array
+    {
+        $result = $this->approveAllForPlayer($player, $user);
+        $player = $player->fresh(['documents']);
+        $enabled = false;
+
+        if ($player && $player->status !== 'enabled' && $player->documentationSummary() === 'Completa') {
+            $this->enablePlayer($player, $user);
+            $enabled = true;
+        } elseif ($player && $result['approved'] > 0 && in_array($player->status, ['submitted', 'pending', 'in_progress'], true)) {
+            $player->update(['status' => 'approved']);
+        }
+
+        return [
+            'approved' => $result['approved'],
+            'skipped' => $result['skipped'],
+            'enabled' => $enabled,
+        ];
+    }
+
     public function validatedReviewPayload(Request $request, bool $requireNotesOnNegative = true): array
     {
         $data = $request->validate([

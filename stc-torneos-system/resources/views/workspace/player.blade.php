@@ -59,15 +59,10 @@
                     <li>
                         <div>
                             <strong>{{ $document->type }}</strong>
-                            <span>{{ $document->statusLabel() }}</span>
+                            <span>{{ $document->fileUrl() ? 'Aprobado' : $document->statusLabel() }}</span>
                         </div>
-                        @if ($canEdit)
-                            <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
-                                @csrf
-                                @method('PATCH')
-                                <input type="hidden" name="status" value="{{ $document->status === 'approved' ? 'observed' : 'approved' }}">
-                                <button type="submit" class="ws-btn ghost">{{ $document->status === 'approved' ? 'Observar' : 'Aprobar' }}</button>
-                            </form>
+                        @if ($document->fileUrl())
+                            <a class="ws-btn ghost" href="{{ $document->fileUrl() }}" target="_blank" rel="noopener">Ver</a>
                         @endif
                     </li>
                 @endforeach

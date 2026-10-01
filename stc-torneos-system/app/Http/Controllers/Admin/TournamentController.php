@@ -9,6 +9,7 @@ use App\Services\RegistrationControl;
 use App\Services\TournamentPurger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -120,11 +121,25 @@ class TournamentController extends Controller
     {
         $this->assertCanCreate();
 
+        return $this->createForm(inWorkspace: true);
+    }
+
+    public function createFromWorkspace(): View
+    {
+        return $this->createForm(inWorkspace: true);
+    }
+
+    private function createForm(bool $inWorkspace): View
+    {
+        $this->assertCanCreate();
+
         return view('admin.tournaments.form', [
             'method' => 'POST',
             'tournament' => new Tournament(['status' => 'draft']),
             'title' => 'Nuevo torneo',
             'url' => route('admin.tournaments.store'),
+            'inWorkspace' => $inWorkspace,
+            'cancelUrl' => route('workspace.home'),
         ]);
     }
 
@@ -137,6 +152,7 @@ class TournamentController extends Controller
 
         $tournament = Tournament::create($data);
         $this->persistLogo($request, $tournament);
+        $this->persistRules($request, $tournament);
 
         $this->audit('create', $tournament, 'Torneo creado desde Admin Web.');
 
@@ -156,12 +172,27 @@ class TournamentController extends Controller
 
     public function edit(Tournament $tournament): View
     {
+        return $this->editForm($tournament, inWorkspace: true);
+    }
+
+    public function editFromWorkspace(Tournament $tournament): View
+    {
+        return $this->editForm($tournament, inWorkspace: true);
+    }
+
+    private function editForm(Tournament $tournament, bool $inWorkspace): View
+    {
         $this->assertTournamentAccess($tournament);
+
         return view('admin.tournaments.form', [
             'method' => 'PUT',
             'tournament' => $tournament,
             'title' => 'Editar torneo',
             'url' => route('admin.tournaments.update', $tournament),
+            'inWorkspace' => $inWorkspace,
+            'cancelUrl' => $inWorkspace
+                ? route('workspace.tournaments.show', $tournament)
+                : route('admin.tournaments.index'),
         ]);
     }
 
@@ -174,6 +205,7 @@ class TournamentController extends Controller
 
         $tournament->update($data);
         $this->persistLogo($request, $tournament);
+        $this->persistRules($request, $tournament);
 
         $this->audit('update', $tournament, 'Torneo actualizado desde Admin Web.');
 
@@ -301,10 +333,8 @@ class TournamentController extends Controller
             'status' => ['required', 'string', 'in:draft,registration,preparation,in_progress,finished,archived'],
             'visibility' => ['required', 'string', 'in:private,public'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'contact_name' => ['nullable', 'string', 'max:160'],
             'contact_email' => ['nullable', 'email', 'max:160'],
-            'contact_phone' => ['nullable', 'string', 'max:80'],
-            'rules_url' => ['nullable', 'string', 'max:1000'],
+            'rules_file' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp,gif', 'max:10240'],
             'general_info' => ['nullable', 'string', 'max:1200'],
             'shield_file' => ['nullable', 'file', 'image', 'max:8192'],
             'shield_data' => ['nullable', 'string', 'max:8000000'],
@@ -318,9 +348,52 @@ class TournamentController extends Controller
     private function tournamentAttributes(Request $request): array
     {
         $data = $this->validatedData($request);
-        unset($data['shield_file'], $data['shield_data'], $data['logo_file']);
+        unset($data['shield_file'], $data['shield_data'], $data['logo_file'], $data['rules_file']);
 
         return $data;
+    }
+
+    private function persistRules(Request $request, Tournament $tournament): void
+    {
+        if (! $request->hasFile('rules_file')) {
+            return;
+        }
+
+        $file = $request->file('rules_file');
+        $ext = strtolower($file->getClientOriginalExtension() ?: $file->extension() ?: 'pdf');
+        if ($ext === 'jpeg') {
+            $ext = 'jpg';
+        }
+        if (! in_array($ext, ['pdf', 'png', 'jpg', 'webp', 'gif'], true)) {
+            throw ValidationException::withMessages([
+                'rules_file' => 'El reglamento tiene que ser un PDF o una imagen.',
+            ]);
+        }
+
+        $directory = public_path('images/tournaments/rules');
+        File::ensureDirectoryExists($directory);
+        $filename = Str::slug($tournament->name ?: 'torneo').'-reglamento-'.Str::random(8).'.'.$ext;
+        $file->move($directory, $filename);
+
+        $old = $tournament->rules_url;
+        $tournament->update(['rules_url' => 'images/tournaments/rules/'.$filename]);
+        $this->deleteUnusedRules($tournament, $old);
+    }
+
+    private function deleteUnusedRules(Tournament $tournament, ?string $path): void
+    {
+        $path = trim((string) $path);
+        if ($path === '' || str_starts_with($path, 'http') || ! str_starts_with($path, 'images/tournaments/rules/')) {
+            return;
+        }
+
+        if (Tournament::query()->where('rules_url', $path)->where('id', '!=', $tournament->id)->exists()) {
+            return;
+        }
+
+        if (is_file(public_path($path))) {
+            File::delete(public_path($path));
+        }
     }
 
     private function persistLogo(Request $request, Tournament $tournament): void

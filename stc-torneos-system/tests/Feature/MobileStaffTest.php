@@ -56,10 +56,12 @@ class MobileStaffTest extends TestCase
             'password' => 'stcdemo',
         ])->json('data.token');
 
+        $scorer = $match->homeTeam?->players()->first() ?? \App\Models\Player::query()->where('team_id', $match->home_team_id)->first();
         $this->withToken($token)
             ->postJson("/api/v1/staff/matches/{$match->id}/events", [
                 'type' => 'goal',
                 'team_id' => $match->home_team_id,
+                'player_id' => $scorer?->id,
                 'minute' => 12,
             ])
             ->assertOk()

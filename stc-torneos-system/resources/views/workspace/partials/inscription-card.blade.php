@@ -15,8 +15,8 @@
             <div>
                 <strong>{{ $player->fullName() }}</strong>
                 <span>{{ $player->team?->name }}</span>
-                @if ($player->guardian?->name)
-                    <small>Tutor: {{ $player->guardian->name }}</small>
+                @if ($player->guardianDisplayName())
+                    <small>Tutor: {{ $player->guardianDisplayName() }}</small>
                 @endif
             </div>
         </a>
@@ -41,16 +41,10 @@
                     $url = $document?->fileUrl();
                     $isImage = $document?->isImage() && $url;
                     $isAuthorization = in_array($type, Player::authorizationDocumentTypes(), true);
-                    $docStatus = $document?->status ?? 'pending';
-                    $docTone = match ($docStatus) {
-                        'approved' => 'approved',
-                        'rejected' => 'rejected',
-                        'observed' => 'observed',
-                        default => $url ? 'pending' : 'empty',
-                    };
-                    if ($document?->wasSignedByGuardian()) {
-                        $docTone = 'approved';
-                    }
+                    $docStatus = $url ? 'approved' : ($document?->status ?? 'pending');
+                    $docTone = $url || $document?->wasSignedByGuardian()
+                        ? 'approved'
+                        : ($document ? 'pending' : 'empty');
                 @endphp
                 <article class="ws-inscription-doc-card is-{{ $docTone }}">
                     @if ($isImage)
@@ -89,10 +83,12 @@
                         <span class="ws-inscription-doc-status">
                             @if ($document?->wasSignedByGuardian())
                                 {{ $document->type === Player::guardianCertificateType() ? 'Constancia generada' : 'Firmado por tutor' }}
-                            @elseif ($isAuthorization && ! $url)
+                            @elseif ($url)
+                                Aprobado
+                            @elseif ($isAuthorization)
                                 Pendiente de firma
                             @else
-                                {{ $document?->statusLabel() ?? 'Pendiente' }}
+                                Pendiente
                             @endif
                         </span>
                         @if ($document?->notes && in_array($docStatus, ['observed', 'rejected'], true))
@@ -110,38 +106,6 @@
                                 data-preview-title="{{ $type }}"
                                 data-preview-kind="{{ $isImage ? 'image' : ($document?->isHtmlDocument() ? 'html' : 'file') }}"
                             >Ver</button>
-                        @endif
-                        @if (! empty($canReview) && $document && $url && ! $document->wasSignedByGuardian() && PlayerDocument::requiresClubReviewForType($type))
-                            @if ($docStatus !== 'approved')
-                                <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status" value="approved">
-                                    <button type="submit" class="ws-btn">Aprobar</button>
-                                </form>
-                            @endif
-                            @if ($docStatus !== 'rejected')
-                                <details class="ws-inscription-doc-reject">
-                                    <summary class="ws-btn ghost danger">Rechazar</summary>
-                                    <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
-                                        @csrf
-                                        @method('PATCH')
-                                        <input type="hidden" name="status" value="rejected">
-                                        <label>Motivo
-                                            <input type="text" name="notes" maxlength="500" placeholder="Ej: Ilegible">
-                                        </label>
-                                        <button type="submit" class="ws-btn danger">Confirmar</button>
-                                    </form>
-                                </details>
-                            @endif
-                            @if ($docStatus === 'approved')
-                                <form method="post" action="{{ route('workspace.categories.documents.review', [$category, $document]) }}">
-                                    @csrf
-                                    @method('PATCH')
-                                    <input type="hidden" name="status" value="observed">
-                                    <button type="submit" class="ws-btn ghost">Observar</button>
-                                </form>
-                            @endif
                         @endif
                     </div>
                 </article>

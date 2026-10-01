@@ -3,13 +3,12 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#020714">
-    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>{{ $title ?? 'STC Torneos' }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="stc-body">
+<body class="stc-body stc-app">
     <div class="stc-nav-overlay" data-close-menu></div>
     <div class="stc-shell">
             @include('admin.partials.sidebar')
@@ -53,6 +52,7 @@
             {{ $slot }}
         </main>
     </div>
+    @include('admin.partials.app-nav')
 
     <div class="stc-confirm-modal" data-confirm-modal hidden>
         <div class="stc-confirm-card">

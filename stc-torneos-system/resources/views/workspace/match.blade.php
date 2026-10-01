@@ -79,6 +79,9 @@
                     <button type="submit" class="ws-btn">Guardar resultado</button>
                 </form>
             @endif
+            @if ($canOperateMatch && ! ($sheet?->locked))
+                <button type="button" class="ws-btn" data-ws-open="lineup">Alineación</button>
+            @endif
             @include('workspace.partials.delete-match-form', ['match' => $match, 'buttonClass' => 'ws-btn danger'])
         </article>
 
@@ -107,8 +110,8 @@
                         <option value="{{ $match->home_team_id }}">{{ $match->homeTeam?->name }}</option>
                         <option value="{{ $match->away_team_id }}">{{ $match->awayTeam?->name }}</option>
                     </select>
-                    <select name="player_id" data-ws-player-filter data-ws-actor-field="player">
-                        <option value="">Sin jugador</option>
+                    <select name="player_id" required data-ws-player-filter data-ws-actor-field="player">
+                        <option value="">Elegí jugador</option>
                         @foreach ($match->homeTeam?->players ?? [] as $player)
                             <option value="{{ $player->id }}" data-team-id="{{ $match->home_team_id }}">{{ $player->fullName() }}</option>
                         @endforeach
@@ -240,4 +243,8 @@
             @endif
         </article>
     </section>
+
+    @if ($canOperateMatch && ! ($sheet?->locked))
+        @include('workspace.partials.lineup-modal')
+    @endif
 </x-layouts.workspace>

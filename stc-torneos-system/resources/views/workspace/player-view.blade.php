@@ -38,7 +38,7 @@
 
                 <article class="ws-card">
                     <p class="stc-eyebrow">Documentación</p>
-                    <p class="ws-muted">Archivos cargados en la ficha. Para subir o modificar documentos, usá Editar ficha.</p>
+                    <p class="ws-muted">Si el archivo está cargado, figura como aprobado. Para cambiarlo, el representante usa el enlace de la ficha.</p>
                     <ul class="ws-doc-list">
                         @foreach (\App\Models\Player::documentTypes() as $type)
                             @include('workspace.partials.player-doc-row', [

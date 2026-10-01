@@ -2,8 +2,9 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Ficha del tutor | STC Torneos</title>
+    @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/ficha.js'])
 </head>
 <body class="ficha-setup-body">

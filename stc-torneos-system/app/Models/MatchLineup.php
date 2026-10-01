@@ -12,14 +12,20 @@ class MatchLineup extends Model
         'team_id',
         'player_id',
         'starter',
+        'shirt_number',
         'sort_order',
+        'pos_x',
+        'pos_y',
     ];
 
     protected function casts(): array
     {
         return [
             'starter' => 'boolean',
+            'shirt_number' => 'integer',
             'sort_order' => 'integer',
+            'pos_x' => 'integer',
+            'pos_y' => 'integer',
         ];
     }
 

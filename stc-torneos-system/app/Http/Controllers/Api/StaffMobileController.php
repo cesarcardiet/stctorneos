@@ -130,16 +130,15 @@ class StaffMobileController extends ApiController
         ]);
 
         abort_unless(in_array((int) $data['team_id'], [(int) $match->home_team_id, (int) $match->away_team_id], true), 422);
+        abort_unless(filled($data['player_id'] ?? null), 422, 'Elegí el jugador. Goles, asistencias y tarjetas son del jugador, no del equipo.');
 
-        if (filled($data['player_id'] ?? null)) {
-            $player = Player::query()->findOrFail($data['player_id']);
-            abort_unless((int) $player->team_id === (int) $data['team_id'], 422, 'Ese jugador no es de ese equipo.');
-        }
+        $player = Player::query()->findOrFail($data['player_id']);
+        abort_unless((int) $player->team_id === (int) $data['team_id'], 422, 'Ese jugador no es de ese equipo.');
 
         MatchSheetEvent::create([
             'match_sheet_id' => $sheet->id,
             'type' => $data['type'],
-            'player_id' => $data['player_id'] ?? null,
+            'player_id' => $player->id,
             'team_id' => $data['team_id'],
             'minute' => $data['minute'] ?? null,
         ]);

@@ -4,265 +4,171 @@
     $player = $player ?? null;
     $category = $category ?? $player?->team?->category;
     $tournament = $tournament ?? $category?->tournament ?? $player?->team?->tournament;
-    $stats = $stats ?? ['matches_played' => 0, 'goals' => 0, 'assists' => 0, 'yellows' => 0];
-    $showPrivate = $showPrivate ?? true;
+    $stats = $stats ?? ['matches_played' => 0, 'goals' => 0, 'assists' => 0, 'yellows' => 0, 'reds' => 0];
     $canEdit = $canEdit ?? false;
 
     $countryCode = Countries::guessCode($player?->nationality, $player?->team?->delegation?->country_code);
     $flagUrl = Countries::flagUrl($countryCode);
     $nationalityLabel = strtoupper($player?->nationality ?: Countries::name($countryCode) ?: '—');
 
-    $isVerified = in_array($player?->status, ['approved', 'enabled'], true);
-    $categoryLabel = collect([
-        $category?->birth_year,
-        strtoupper($category?->name ?? ''),
-    ])->filter()->implode(' ');
-
     $footLabel = match (strtolower((string) $player?->preferred_foot)) {
-        'derecha', 'derecho' => 'Derecho',
-        'izquierda', 'izquierdo' => 'Izquierdo',
+        'derecha', 'derecho' => 'Derecha',
+        'izquierda', 'izquierdo' => 'Izquierda',
         'ambidiestro' => 'Ambidiestro',
         default => $player?->preferred_foot ?: '—',
     };
 
-    $heightLabel = $player?->height
-        ? (str_contains((string) $player->height, 'm') ? $player->height : $player->height.' m')
-        : '—';
-
-    $weightLabel = $player?->weight
-        ? (str_contains(strtolower((string) $player->weight), 'kg') ? $player->weight : $player->weight.' kg')
-        : '—';
+    $jersey = $player?->jersey_number ?: '—';
+    $birthLabel = $player?->birth_date?->format('d/m/Y') ?: '—';
+    $ageLabel = $player?->age() !== null ? $player->age().' años' : null;
+    $tournamentName = strtoupper($tournament?->name ?: 'STC TORNEOS');
+    $categoryYear = $category?->birth_year;
+    $categoryName = strtoupper($category?->name ?: '');
+    $logoUrl = $tournament?->logoUrl();
+    $fileName = \Illuminate\Support\Str::slug($player?->fullName() ?: 'jugador');
 @endphp
 
-<article class="pfc-card">
-    <header class="pfc-hero">
-        <div class="pfc-hero-backdrop" aria-hidden="true">
-            <img src="{{ $player->photoUrl() }}" alt="">
+<article class="stc-pcard" data-pcard data-pcard-name="{{ $fileName }}">
+    <div class="stc-pcard-poster">
+        <img class="stc-pcard-photo" src="{{ $player->photoUrl() }}" alt="{{ $player->fullName() }}">
+        <div class="stc-pcard-shade" aria-hidden="true"></div>
+
+        <div class="stc-pcard-mark" aria-hidden="true">
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="">
+            @else
+                <svg viewBox="0 0 120 120" fill="none">
+                    <circle cx="60" cy="28" r="16" stroke="currentColor" stroke-width="3"/>
+                    <path d="M48 28h24M60 12v32M50 20c8 4 12 12 10 20M70 20c-8 4-12 12-10 20" stroke="currentColor" stroke-width="2"/>
+                    <text x="60" y="86" text-anchor="middle" fill="currentColor" font-size="28" font-weight="800">STC</text>
+                </svg>
+            @endif
+            <span>{{ $tournamentName }}</span>
         </div>
 
-        <div class="pfc-hero-photo">
-            <img src="{{ $player->photoUrl() }}" alt="{{ $player->fullName() }}">
-            @if ($canEdit && $category)
-                <form class="ws-photo-change" method="post" action="{{ route('workspace.categories.players.documents', [$category, $player]) }}" enctype="multipart/form-data" data-ws-shield-crop data-ws-crop-kind="player" data-ws-shield-save="{{ route('workspace.categories.players.documents', [$category, $player]) }}">
-                    @csrf
-                    <input type="hidden" name="type" value="Foto del jugador">
-                    <img data-ws-shield-preview src="{{ $player->photoUrl() }}" alt="" hidden>
-                    <label>
-                        Cambiar foto
-                        <input type="file" name="file" accept="image/png,image/jpeg,image/webp">
-                    </label>
-                    <small>Se guarda al confirmar el recorte.</small>
-                </form>
-            @endif
-        </div>
-
-        <div class="pfc-hero-body">
-            @if ($isVerified)
-                <span class="pfc-verified">
-                    <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1.5l2.2 4.5 5 .7-3.6 3.5.9 5.1L10 13.2l-4.5 2.1.9-5.1-3.6-3.5 5-.7L10 1.5z" fill="currentColor"/></svg>
-                    Perfil verificado
-                </span>
-            @endif
-
-            <p class="pfc-first-name">{{ strtoupper($player->first_name) }}</p>
-            <h2 class="pfc-last-name">{{ strtoupper($player->last_name) }}</h2>
-
-            <p class="pfc-nationality">
-                @if ($flagUrl)
-                    <img src="{{ $flagUrl }}" alt="" loading="lazy">
+        <header class="stc-pcard-top">
+            <p>{{ $tournamentName }}</p>
+            <div>
+                @if ($categoryYear)
+                    <strong>CAT. {{ $categoryYear }}</strong>
                 @endif
-                <span>{{ $nationalityLabel }}</span>
-            </p>
+                @if ($categoryName)
+                    <span>{{ $categoryName }}</span>
+                @endif
+            </div>
+        </header>
 
-            <ul class="pfc-quick">
+        <div class="stc-pcard-copy">
+            <p class="stc-pcard-number">{{ $jersey }}</p>
+            <p class="stc-pcard-first">{{ mb_strtoupper($player->first_name, 'UTF-8') }}</p>
+            <h2 class="stc-pcard-last">{{ mb_strtoupper($player->last_name, 'UTF-8') }}</h2>
+
+            <ul class="stc-pcard-facts">
                 <li>
-                    <span class="pfc-quick-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z" fill="currentColor"/></svg>
+                    <span class="stc-pcard-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3" stroke="currentColor" stroke-width="1.8"/></svg>
                     </span>
-                    <strong>{{ $player->age() ?? '—' }}</strong>
-                    <small>Edad</small>
+                    <div><strong>{{ $player->position ?: 'Sin definir' }}</strong></div>
                 </li>
                 <li>
-                    <span class="pfc-quick-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M12 2 3 7v2c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5Zm0 2.2 7 3.9v1.9c0 4.4-3 8.6-7 9.8-4-1.2-7-5.4-7-9.8V8.1l7-3.9Z" fill="currentColor"/></svg>
+                    <span class="stc-pcard-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v4M16 3v4M4 10h16" stroke="currentColor" stroke-width="1.8"/></svg>
                     </span>
-                    <strong>{{ $category?->birth_year ?? '—' }}</strong>
-                    <small>Categoría</small>
+                    <div>
+                        <strong>{{ $birthLabel }}</strong>
+                        @if ($ageLabel)
+                            <small>{{ $ageLabel }}</small>
+                        @endif
+                    </div>
                 </li>
                 <li>
-                    <span class="pfc-quick-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M7 3h10v3H7V3Zm-1 5h12l-1 13H8L7 8Zm4 2v9h2v-9h-2Z" fill="currentColor"/></svg>
+                    <span class="stc-pcard-ico" aria-hidden="true">
+                        @if ($flagUrl)
+                            <img src="{{ $flagUrl }}" alt="">
+                        @else
+                            <svg viewBox="0 0 24 24"><path d="M5 4h10l-2 4 2 4H5V4Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 4v16" stroke="currentColor" stroke-width="1.8"/></svg>
+                        @endif
                     </span>
-                    <strong>{{ $player->jersey_number ?? '—' }}</strong>
-                    <small>Número</small>
+                    <div>
+                        <strong>{{ $nationalityLabel }}</strong>
+                        <small>Nacionalidad</small>
+                    </div>
                 </li>
                 <li>
-                    <span class="pfc-quick-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M4 20c2-8 6-12 8-12s6 4 8 12H4Zm8-10a3 3 0 1 0-3 3 3 3 0 0 0 3-3Z" fill="currentColor"/></svg>
+                    <span class="stc-pcard-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M8 4h8l1.2 4H6.8L8 4Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 8h10l-1 12H8L7 8Z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>
                     </span>
-                    <strong>{{ $footLabel }}</strong>
-                    <small>Pie hábil</small>
+                    <div>
+                        <strong>{{ $jersey }}</strong>
+                        <small>Número</small>
+                    </div>
+                </li>
+                <li>
+                    <span class="stc-pcard-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M5 16c3-8 6-10 7-10s4 2 7 10H5Z" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M9 16c.6-3 1.8-5 3-5s2.4 2 3 5" stroke="currentColor" stroke-width="1.6"/></svg>
+                    </span>
+                    <div>
+                        <strong>{{ $footLabel }}</strong>
+                        <small>Pierna hábil</small>
+                    </div>
                 </li>
             </ul>
         </div>
-    </header>
 
-    <section class="pfc-club-bar">
-        <div class="pfc-club-item">
-            <img src="{{ $player->team?->shieldUrl() }}" alt="">
-            <div>
-                <small>Club</small>
-                <strong>{{ strtoupper($player->team?->name ?: 'Sin equipo') }}</strong>
+        @if ($player?->team)
+            <div class="stc-pcard-club">
+                <img class="stc-pcard-club-shield" src="{{ $player->team->shieldUrl() }}" alt="{{ $player->team->name }}">
+                <small>{{ $player->team->name }}</small>
             </div>
-        </div>
-        <div class="pfc-club-item">
-            <span class="pfc-club-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M12 2 3 7v2c0 5.5 3.8 10.7 9 12 5.2-1.3 9-6.5 9-12V7l-9-5Z" fill="currentColor"/></svg>
-            </span>
-            <div>
-                <small>Categoría</small>
-                <strong>{{ $categoryLabel ?: '—' }}</strong>
-            </div>
-        </div>
-        <div class="pfc-club-item pfc-club-position">
-            <x-player-position-pitch :position="$player->position" size="sm" />
-            <div>
-                <small>Posición principal</small>
-                <strong>{{ strtoupper($player->position ?: 'Sin definir') }}</strong>
-            </div>
-        </div>
-        <div class="pfc-club-item pfc-club-position">
-            <x-player-position-pitch size="sm" />
-            <div>
-                <small>Posición secundaria</small>
-                <strong>Sin definir</strong>
-            </div>
-        </div>
-    </section>
+        @endif
 
-    <section class="pfc-physical">
-        <div>
-            <span class="pfc-physical-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M4 20V4h2v16H4Zm14 0V8h2v12h-2ZM11 20v-6h2v6h-2Zm-3.5-8L12 4l4.5 8h-9Z" fill="currentColor"/></svg>
-            </span>
-            <div>
-                <small>Altura</small>
-                <strong>{{ $heightLabel }}</strong>
-            </div>
-        </div>
-        <div>
-            <span class="pfc-physical-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M12 3a5 5 0 0 1 5 5v1h2v14H5V9h2V8a5 5 0 0 1 5-5Zm0 2a3 3 0 0 0-3 3v1h6V8a3 3 0 0 0-3-3Z" fill="currentColor"/></svg>
-            </span>
-            <div>
-                <small>Peso</small>
-                <strong>{{ $weightLabel }}</strong>
-            </div>
-        </div>
-        <div>
-            <span class="pfc-physical-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M4 20c2-8 6-12 8-12s6 4 8 12H4Z" fill="currentColor"/></svg>
-            </span>
-            <div>
-                <small>Pie hábil</small>
-                <strong>{{ $footLabel }}</strong>
-            </div>
-        </div>
-    </section>
-
-    <div class="pfc-body-grid">
-        <div class="pfc-left-stack">
-            <section class="pfc-panel pfc-about">
-                <header>
-                    <span class="pfc-panel-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5Z" fill="currentColor"/></svg>
-                    </span>
-                    <h3>Sobre mí</h3>
-                </header>
-                <p>{{ filled($player->notes) ? $player->notes : 'Todavía no hay una presentación cargada para este jugador.' }}</p>
-            </section>
-
-            @if ($showPrivate)
-                <section class="pfc-panel pfc-achievements">
-                    <header>
-                        <span class="pfc-panel-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M8 4h8l1 3h3v2h-1.1c.3 1.2.1 2.5-.7 3.5L16 18H8l-2.2-5.5c-.8-1-.9-2.3-.7-3.5H4V7h3l1-3Zm2.2 2-.4 1.2H14l-.4-1.2H10.2Z" fill="currentColor"/></svg>
-                        </span>
-                        <h3>Logros destacados</h3>
-                    </header>
-                    <p class="pfc-empty">Próximamente podrás ver distinciones y premios del jugador en torneos STC.</p>
-                </section>
-            @endif
-        </div>
-
-        <section class="pfc-panel pfc-stats">
-            <header>
-                <span class="pfc-panel-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M4 19V5h16v14H4Zm2-2h12V7H6v10Zm2-8h2v6H8V9Zm4 0h2v4h-2V9Zm4 0h2v8h-2V9Z" fill="currentColor"/></svg>
-                </span>
-                <h3>Mis estadísticas STC</h3>
-            </header>
-            <ul class="pfc-stats-grid">
-                <li>
-                    <span class="pfc-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M6 3h12v2H6V3Zm-1 4h14l-1 14H6L5 7Zm3 2v10h2V9H8Zm4 0v10h2V9h-2Z" fill="currentColor"/></svg>
-                    </span>
-                    <strong>{{ $stats['matches_played'] ?? 0 }}</strong>
-                    <small>Partidos</small>
-                </li>
-                <li>
-                    <span class="pfc-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="currentColor"/></svg>
-                    </span>
-                    <strong>{{ $stats['goals'] ?? 0 }}</strong>
-                    <small>Goles</small>
-                </li>
-                <li>
-                    <span class="pfc-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="2"/></svg>
-                    </span>
-                    <strong>{{ $stats['assists'] ?? 0 }}</strong>
-                    <small>Asistencias</small>
-                </li>
-                <li>
-                    <span class="pfc-stat-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24"><path d="M10 1.5 12.2 6l5 .7-3.6 3.5.9 5.1L10 13.2l-4.5 2.1.9-5.1L2.8 6.7l5-.7L10 1.5Z" fill="currentColor"/></svg>
-                    </span>
-                    <strong>{{ $stats['yellows'] ?? 0 }}</strong>
-                    <small>Amarillas</small>
-                </li>
-            </ul>
-            <p class="pfc-stats-foot">Datos acumulados en torneos STC</p>
-        </section>
+        @if ($canEdit && $category)
+            <form class="ws-photo-change stc-pcard-photo-edit" method="post" action="{{ route('workspace.categories.players.documents', [$category, $player]) }}" enctype="multipart/form-data" data-ws-shield-crop data-ws-crop-kind="player" data-ws-shield-save="{{ route('workspace.categories.players.documents', [$category, $player]) }}">
+                @csrf
+                <input type="hidden" name="type" value="Foto del jugador">
+                <img data-ws-shield-preview src="{{ $player->photoUrl() }}" alt="" hidden>
+                <label>
+                    Cambiar foto
+                    <input type="file" name="file" accept="image/png,image/jpeg,image/webp">
+                </label>
+            </form>
+        @endif
     </div>
 
-    @if ($tournament)
-        <section class="pfc-history">
-            <header>
-                <span class="pfc-panel-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24"><path d="M7 2h10v2h5v18H4V4h3V2Zm12 6H5v12h14V8ZM7 6V4h10v2H7Z" fill="currentColor"/></svg>
+    <section class="stc-pcard-stats">
+        <h3>Estadísticas del jugador</h3>
+        <ul>
+            <li>
+                <span class="stc-pcard-stat-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 5v14M3 12h18" stroke="currentColor" stroke-width="1.4"/></svg>
                 </span>
-                <h3>Historial en STC</h3>
-            </header>
-            <div class="pfc-history-body">
-                <div class="pfc-history-count">
-                    <strong>1</strong>
-                    <span>Torneo jugado</span>
-                </div>
-                <div class="pfc-history-tournaments">
-                    @if ($tournament->logoUrl())
-                        <img src="{{ $tournament->logoUrl() }}" alt="{{ $tournament->name }}">
-                    @endif
-                    <span>{{ $tournament->name }}</span>
-                </div>
-                <div class="pfc-history-debut">
-                    <span class="pfc-debut-star" aria-hidden="true">★</span>
-                    <div>
-                        <small>Debut en STC</small>
-                        <strong>{{ $tournament->name }}</strong>
-                    </div>
-                </div>
-            </div>
-        </section>
-    @endif
+                <strong>{{ $stats['matches_played'] ?? 0 }}</strong>
+                <small>Partidos</small>
+            </li>
+            <li>
+                <span class="stc-pcard-stat-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 4c2 3 2 13 0 16M12 4c-2 3-2 13 0 16M4.5 9h15M4.5 15h15" stroke="currentColor" stroke-width="1.3"/></svg>
+                </span>
+                <strong>{{ $stats['goals'] ?? 0 }}</strong>
+                <small>Goles</small>
+            </li>
+            <li>
+                <span class="stc-pcard-stat-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 16c3-8 6-10 7-10s4 2 7 10H5Z" fill="none" stroke="currentColor" stroke-width="1.7"/></svg>
+                </span>
+                <strong>{{ $stats['assists'] ?? 0 }}</strong>
+                <small>Asistencias</small>
+            </li>
+            <li>
+                <span class="stc-pcard-stat-ico is-cards" aria-hidden="true">
+                    <span class="is-yellow"></span>
+                    <span class="is-red"></span>
+                </span>
+                <strong>{{ ($stats['yellows'] ?? 0) }}/{{ ($stats['reds'] ?? 0) }}</strong>
+                <small>Amarillas / Rojas</small>
+            </li>
+        </ul>
+    </section>
+
+    <button type="button" class="stc-pcard-download" data-pcard-download>Descargar imagen</button>
 </article>

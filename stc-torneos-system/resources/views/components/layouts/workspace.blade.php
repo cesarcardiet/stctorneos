@@ -12,13 +12,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#020714">
     <title>{{ $title }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @include('partials.pwa-head')
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
-<body class="stc-body ws-body">
+<body class="stc-body ws-body stc-app">
     <div class="stc-nav-overlay" data-close-menu></div>
     <div class="stc-shell">
         @include('workspace.partials.sidebar', [
@@ -55,6 +55,11 @@
             {{ $slot }}
         </main>
     </div>
+    @include('workspace.partials.app-nav', [
+        'category' => $category,
+        'tournament' => $tournament,
+        'active' => $active,
+    ])
     @include('workspace.partials.shield-crop-modal')
     @include('workspace.partials.doc-preview-modal')
     @stack('scripts')

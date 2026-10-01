@@ -2059,10 +2059,12 @@ class WorkspaceOperationTest extends TestCase
         $this->assertSame('live', $match->fresh()->status);
         $this->assertFalse((bool) $match->fresh()->sheet?->locked);
 
+        $awayScorer = $other->players()->first();
         $this->actingAs($admin)
             ->post(route('workspace.categories.matches.events', [$category, $match]), [
                 'type' => 'goal',
                 'team_id' => $match->away_team_id,
+                'player_id' => $awayScorer?->id,
                 'minute' => 40,
             ])
             ->assertRedirect();

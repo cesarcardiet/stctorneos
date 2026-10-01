@@ -1,6 +1,7 @@
 @if (! empty($canEdit))
     <p class="ws-muted ws-drag-hint">Arrastrá ⋮⋮ para reordenar equipos dentro del grupo{{ $groups->count() > 1 ? ', o soltá en otro grupo para moverlo' : '' }}.</p>
 @endif
+<p class="ws-table-swipe">Deslizá la tabla hacia el costado para ver todas las columnas.</p>
 
 @php
     $preferredColumnOrder = ['pts', 'j', 'g', 'e', 'p', 'gf', 'gc', 'dif', 'percent', 'pe'];

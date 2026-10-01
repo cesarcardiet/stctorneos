@@ -84,8 +84,8 @@
                 </div>
             </header>
             <div class="category-links">
-                @if ($category->tournament->rules_url)
-                    <a href="{{ $category->tournament->rules_url }}" target="_blank" rel="noopener">Reglamento del torneo</a>
+                @if ($category->tournament->rulesFileUrl())
+                    <a href="{{ $category->tournament->rulesFileUrl() }}" target="_blank" rel="noopener">Reglamento del torneo</a>
                 @endif
                 <a href="{{ route('admin.categories.competition', $category) }}">Forma de disputa</a>
                 <a href="{{ route('admin.categories.rankings', $category) }}">Criterios de desempate</a>

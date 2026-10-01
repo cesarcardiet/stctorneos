@@ -121,6 +121,7 @@ class PlayerPerformanceService
     {
         return MatchSheetEvent::query()
             ->with(['sheet.match.homeTeam', 'sheet.match.awayTeam', 'sheet.match.field', 'team'])
+            ->whereNotNull('player_id')
             ->where('player_id', $player->id)
             ->whereHas('sheet.match', function ($query) use ($categoryId) {
                 $query

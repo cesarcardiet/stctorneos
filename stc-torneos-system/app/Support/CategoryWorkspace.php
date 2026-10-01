@@ -42,6 +42,8 @@ class CategoryWorkspace
                 ['name' => '1º Fase', 'mode' => 'Todos contra Todos'],
                 ['name' => '2º Fase', 'mode' => 'Eliminatoria'],
             ],
+            'rounds' => [],
+            'cup_format' => '',
             'group_names' => [],
             'officials' => [],
             'moderator_ids' => [],
@@ -154,22 +156,100 @@ class CategoryWorkspace
      */
     public static function configuredRounds(array $workspace): array
     {
-        return collect($workspace['rounds'] ?? [])
+        $rounds = collect($workspace['rounds'] ?? [])
             ->map(fn ($round) => is_array($round) ? trim((string) ($round['name'] ?? '')) : trim((string) $round))
             ->filter()
             ->values()
             ->all();
+
+        if ($rounds === [] || self::isGenericRoundCatalog($workspace, $rounds)) {
+            return [];
+        }
+
+        return $rounds;
+    }
+
+    /**
+     * @param  list<string>  $rounds
+     */
+    private static function isGenericRoundCatalog(array $workspace, array $rounds): bool
+    {
+        if (self::hasEliminatoryPhase($workspace)) {
+            return false;
+        }
+
+        return collect($rounds)->contains(fn (string $round) => in_array($round, self::knockoutRounds(), true));
     }
 
     /**
      * @param  array<string, mixed>  $workspace
      * @return list<string>
      */
+    public static function hasEliminatoryPhase(array $workspace): bool
+    {
+        $phases = collect($workspace['phases'] ?? []);
+        $eliminatory = $phases->filter(
+            fn ($phase) => ($phase['mode'] ?? '') === 'Eliminatoria'
+        );
+
+        if ($eliminatory->isEmpty()) {
+            return false;
+        }
+
+        $onlyDefaultSecond = $eliminatory->count() === 1
+            && strcasecmp(trim((string) ($eliminatory->first()['name'] ?? '')), '2º Fase') === 0
+            && $phases->count() <= 2;
+
+        return ! $onlyDefaultSecond;
+    }
+
+    /**
+     * @param  list<string>  $rounds
+     * @return list<string>
+     */
+    public static function sortRounds(array $rounds): array
+    {
+        $knockoutOrder = array_flip(self::knockoutRounds());
+
+        return collect($rounds)
+            ->map(fn ($round) => trim((string) $round))
+            ->filter()
+            ->unique()
+            ->sort(function (string $left, string $right) use ($knockoutOrder) {
+                $leftDate = preg_match('/^Fecha\s+(\d+)$/u', $left, $leftMatch) ? (int) $leftMatch[1] : null;
+                $rightDate = preg_match('/^Fecha\s+(\d+)$/u', $right, $rightMatch) ? (int) $rightMatch[1] : null;
+                if ($leftDate !== null && $rightDate !== null) {
+                    return $leftDate <=> $rightDate;
+                }
+                if ($leftDate !== null) {
+                    return -1;
+                }
+                if ($rightDate !== null) {
+                    return 1;
+                }
+
+                $leftIndex = $knockoutOrder[$left] ?? 100;
+                $rightIndex = $knockoutOrder[$right] ?? 100;
+                if ($leftIndex !== 100 || $rightIndex !== 100) {
+                    return $leftIndex <=> $rightIndex;
+                }
+
+                return strnatcasecmp($left, $right);
+            })
+            ->values()
+            ->all();
+    }
+
     public static function editableRounds(array $workspace): array
     {
         $configured = self::configuredRounds($workspace);
+        if ($configured !== []) {
+            return $configured;
+        }
 
-        return $configured !== [] ? $configured : array_merge(self::matchdayRounds(), self::knockoutRounds());
+        return self::hasEliminatoryPhase($workspace)
+            ? array_merge(self::matchdayRounds(), self::knockoutRounds())
+            : self::matchdayRounds();
     }
 
     /**
@@ -207,8 +287,60 @@ class CategoryWorkspace
             'Final',
             'Final Oro',
             'Final Plata',
+            'Final Bronce',
             'Tercer puesto',
         ];
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function goldSilverBronzeRounds(): array
+    {
+        return ['Final Oro', 'Final Plata', 'Final Bronce'];
+    }
+
+    public static function isCupRound(string $round): bool
+    {
+        return (bool) preg_match('/\b(oro|plata|bronce)\b/iu', $round)
+            || strcasecmp(trim($round), 'Tercer puesto') === 0;
+    }
+
+    public static function isCatalogKnockout(string $round): bool
+    {
+        return in_array($round, self::knockoutRounds(), true)
+            || (bool) preg_match('/^(octavos|cuartos|semifinal|semi|final|tercer puesto)/iu', trim($round));
+    }
+
+    /**
+     * @param  list<string>  $existing
+     */
+    public static function hasGoldSilverBronze(array $workspace, array $existing = []): bool
+    {
+        $format = (string) ($workspace['cup_format'] ?? '');
+        if ($format === 'oro_plata_bronce') {
+            return true;
+        }
+        if ($format === 'none' || $format === '0') {
+            return false;
+        }
+
+        return collect($existing)->contains(fn ($round) => self::isCupRound((string) $round));
+    }
+
+    /**
+     * @param  list<string>  $rounds
+     * @return list<string>
+     */
+    public static function matchdaysOnly(array $rounds): array
+    {
+        return collect($rounds)
+            ->map(fn ($round) => trim((string) $round))
+            ->filter()
+            ->reject(fn (string $round) => self::isCatalogKnockout($round) || self::isCupRound($round))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     /**
@@ -216,16 +348,93 @@ class CategoryWorkspace
      * @param  list<string>  $existing
      * @return list<string>
      */
+    public static function nextMatchday(array $existing): string
+    {
+        $max = 0;
+        foreach ($existing as $round) {
+            if (preg_match('/^Fecha\s+(\d+)$/u', (string) $round, $match)) {
+                $max = max($max, (int) $match[1]);
+            }
+        }
+
+        return 'Fecha '.($max > 0 ? $max + 1 : 1);
+    }
+
+    /**
+     * Fechas del filtro: solo las de esta categoría (configuradas o ya jugadas).
+     *
+     * @param  array<string, mixed>  $workspace
+     * @param  list<string>  $existing
+     * @return list<string>
+     */
+    public static function editorMatchdays(array $workspace, array $existing = []): array
+    {
+        $configured = self::matchdaysOnly(self::configuredRounds($workspace));
+        if ($configured !== []) {
+            return self::sortRounds($configured);
+        }
+
+        return self::sortRounds(self::matchdaysOnly($existing));
+    }
+
     public static function roundOptions(array $workspace, array $existing = []): array
     {
-        $base = self::editableRounds($workspace);
+        $existing = collect($existing)->filter()->unique()->values()->all();
+        $matchdays = self::editorMatchdays($workspace, $existing);
+        $rounds = $matchdays;
 
-        return collect($base)
-            ->concat($existing)
-            ->filter()
-            ->unique()
-            ->values()
-            ->all();
+        if (self::hasGoldSilverBronze($workspace, $existing)) {
+            $rounds = array_merge($rounds, self::goldSilverBronzeRounds());
+        }
+
+        return self::sortRounds($rounds);
+    }
+
+    /**
+     * Fechas para cargar un partido nuevo: las de este torneo, no el catálogo global.
+     *
+     * @param  array<string, mixed>  $workspace
+     * @param  list<string>  $existing
+     * @return list<string>
+     */
+    public static function formRounds(array $workspace, array $existing = []): array
+    {
+        $existing = collect($existing)->filter()->unique()->values()->all();
+        $matchdays = self::editorMatchdays($workspace, $existing);
+        if ($matchdays === []) {
+            $matchdays = ['Fecha 1'];
+        } elseif (self::configuredRounds($workspace) === []) {
+            $matchdays = self::sortRounds(array_merge($matchdays, [self::nextMatchday($matchdays)]));
+        }
+
+        $rounds = $matchdays;
+        if (self::hasGoldSilverBronze($workspace, $existing)) {
+            $rounds = array_merge($rounds, self::goldSilverBronzeRounds());
+        }
+
+        return self::sortRounds($rounds);
+    }
+
+    /**
+     * @param  array<string, mixed>  $workspace
+     * @param  list<string>  $existing
+     * @return list<string>
+     */
+    public static function phaseOptions(array $workspace, array $existing = []): array
+    {
+        $configured = self::phaseNames($workspace);
+        $existing = collect($existing)->filter()->unique()->values()->all();
+
+        if ($existing !== []) {
+            return collect($configured)
+                ->filter(fn (string $phase) => in_array($phase, $existing, true))
+                ->concat($existing)
+                ->unique()
+                ->values()
+                ->all();
+        }
+
+        return $configured;
     }
 
     public static function normalizeRound(?string $round, ?string $stage = null): string
@@ -248,7 +457,8 @@ class CategoryWorkspace
 
         $knockout = [
             'finales' => 'Final',
-            'final bronce' => 'Tercer puesto',
+            'final bronce' => 'Final Bronce',
+            'tercer puesto' => 'Final Bronce',
             'final oro' => 'Final Oro',
             'final plata' => 'Final Plata',
             'octavos' => 'Octavos de final',

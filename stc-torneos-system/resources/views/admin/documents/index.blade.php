@@ -154,10 +154,10 @@
                     <footer class="docs-player-foot">
                         <a href="{{ route('admin.players.show', [$player, 'tab' => 'aprobacion']) }}">Abrir ficha de aprobación</a>
                         @if ($canApprove && $pendingCount > 0)
-                            <form method="post" action="{{ route('admin.players.documents.approve-all', $player) }}" data-confirm="¿Aprobar toda la documentación cargada de {{ $player->fullName() }}?">
+                            <form method="post" action="{{ route('admin.players.documents.approve-all', $player) }}" data-confirm="¿Aprobar la ficha completa de {{ $player->fullName() }}?">
                                 @csrf
                                 @method('PATCH')
-                                <button type="submit" class="stc-btn-new">Aprobar toda la documentación</button>
+                                <button type="submit" class="stc-btn-new">Aprobar ficha completa</button>
                             </form>
                         @endif
                         <a href="{{ route('admin.players.edit', $player) }}">Editar jugador</a>

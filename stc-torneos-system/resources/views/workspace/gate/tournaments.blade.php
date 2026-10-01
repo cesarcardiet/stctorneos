@@ -19,7 +19,7 @@
                 @endif
 
                 @if (! empty($canCreateTournaments))
-                    <a class="stc-pill-btn" href="{{ route('admin.tournaments.create') }}">+ Crear torneo</a>
+                    <a class="stc-pill-btn" href="{{ route('workspace.tournaments.create') }}">+ Crear torneo</a>
                 @endif
             </div>
         </header>
@@ -72,7 +72,7 @@
                     <div class="ws-tourney-card-actions">
                         <a class="stc-pill-btn" href="{{ route('workspace.tournaments.show', $item) }}">Entrar</a>
                         @if ($canEditItem)
-                            <a class="stc-pill-btn ghost" href="{{ route('admin.tournaments.edit', $item) }}">Editar</a>
+                            <a class="stc-pill-btn ghost" href="{{ route('workspace.tournaments.edit', $item) }}">Editar</a>
                         @endif
                         @if (! empty($canDeleteTournaments))
                             <form method="post" action="{{ route('workspace.tournaments.destroy', $item) }}" onsubmit="return confirm('¿Eliminar {{ $item->name }}? Se borran categorías, equipos y partidos de ese torneo.')">
@@ -88,7 +88,7 @@
                     <strong>No hay torneos en tu alcance.</strong>
                     @if (! empty($canCreateTournaments))
                         <p>Creá el primero para empezar a cargar categorías, equipos y fixture.</p>
-                        <a class="stc-pill-btn" href="{{ route('admin.tournaments.create') }}">+ Crear torneo</a>
+                        <a class="stc-pill-btn" href="{{ route('workspace.tournaments.create') }}">+ Crear torneo</a>
                     @endif
                 </div>
             @endforelse

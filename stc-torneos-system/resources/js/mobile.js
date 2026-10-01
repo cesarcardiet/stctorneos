@@ -1,7 +1,32 @@
 import $ from 'jquery';
 
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+    }).catch(() => {});
+}
+
+window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+});
+
+function wrapWideTables() {
+    document.querySelectorAll('.stc-main table').forEach((table) => {
+        if (table.closest('.stc-table-scroll, .standings-scroll, .ws-table-swipe')) {
+            return;
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className = 'stc-table-scroll';
+        table.parentNode.insertBefore(wrap, table);
+        wrap.appendChild(table);
+    });
+}
+
 $(function () {
     const $body = $('.stc-body');
+    wrapWideTables();
+
     if (!$body.length) {
         return;
     }

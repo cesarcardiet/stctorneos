@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Validation\ValidationException;
 
 class Player extends Model
 {
@@ -80,10 +81,10 @@ class Player extends Model
     {
         return [
             'draft' => 'Registro inicial',
-            'awaiting_guardian' => 'Pendiente de Tutor',
+            'awaiting_guardian' => 'Falta el tutor',
             'in_progress' => 'En proceso',
-            'submitted' => 'Esperando aprobación',
-            'pending' => 'Esperando aprobación',
+            'submitted' => 'Esperando aprobación de operación',
+            'pending' => 'Esperando aprobación de operación',
             'observed' => 'Observado',
             'approved' => 'Aprobado',
             'rejected' => 'Rechazado',
@@ -116,6 +117,68 @@ class Player extends Model
     public function statusLabel(): string
     {
         return self::statusLabels()[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    /**
+     * Un solo estado para el plantel: no mezcla tutor + operación en la misma fila.
+     */
+    public function rosterPhaseLabel(): string
+    {
+        return match ($this->status) {
+            'enabled' => 'Habilitado',
+            'approved' => 'Aprobado',
+            'observed' => 'Observado',
+            'rejected' => 'Rechazado',
+            'blocked' => 'Bloqueado',
+            'awaiting_guardian', 'draft' => 'Falta el tutor',
+            default => 'Esperando aprobación de operación',
+        };
+    }
+
+    public function guardianDisplayName(): ?string
+    {
+        $name = trim((string) ($this->guardian?->name ?? ''));
+        if ($name === '' || preg_match('/^(Familiar|Tutor)\s+de\b/iu', $name)) {
+            return null;
+        }
+
+        return $name;
+    }
+
+    public static function findDuplicateOnTeam(int $teamId, string $firstName, string $lastName, ?string $documentNumber = null, ?int $ignoreId = null): ?self
+    {
+        $first = mb_strtolower(trim($firstName));
+        $last = mb_strtolower(trim($lastName));
+        $document = trim((string) $documentNumber);
+
+        return static::query()
+            ->where('team_id', $teamId)
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->where(function ($query) use ($first, $last, $document) {
+                if ($document !== '') {
+                    $query->where('document_number', $document);
+                }
+
+                $query->orWhere(function ($sameName) use ($first, $last) {
+                    $sameName
+                        ->whereRaw('LOWER(first_name) = ?', [$first])
+                        ->whereRaw('LOWER(last_name) = ?', [$last]);
+                });
+            })
+            ->first();
+    }
+
+    public static function assertUniqueOnTeam(int $teamId, string $firstName, string $lastName, ?string $documentNumber = null, ?int $ignoreId = null): void
+    {
+        $existing = self::findDuplicateOnTeam($teamId, $firstName, $lastName, $documentNumber, $ignoreId);
+        if (! $existing) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'document_number' => 'Ese jugador ya está en este plantel. No se puede cargar dos veces.',
+            'last_name' => 'Ese jugador ya está en este plantel. No se puede cargar dos veces.',
+        ]);
     }
 
     /**
@@ -293,8 +356,10 @@ class Player extends Model
     public function storedPhotoPath(): ?string
     {
         $fromDoc = $this->relationLoaded('documents')
-            ? $this->documentByType('Foto del jugador')?->file_path
-            : null;
+            ? $this->documents->firstWhere('type', 'Foto del jugador')?->file_path
+            : ($this->exists
+                ? $this->documents()->where('type', 'Foto del jugador')->value('file_path')
+                : null);
 
         // photo_path first so a fresh upload is never shadowed by a stale document row.
         foreach ([$this->photo_path, $fromDoc] as $path) {
@@ -381,6 +446,20 @@ class Player extends Model
     public function isFileComplete(): bool
     {
         return in_array($this->documentationSummary(), ['Completa'], true);
+    }
+
+    public function uploadsReadyForApproval(): bool
+    {
+        $this->loadMissing('documents');
+
+        foreach (self::uploadDocumentTypes() as $type) {
+            $document = $this->documentByType($type);
+            if (! filled($document?->file_path)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function documentLabel(string $type): string

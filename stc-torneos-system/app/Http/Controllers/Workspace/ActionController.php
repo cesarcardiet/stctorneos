@@ -13,6 +13,7 @@ use App\Models\Field;
 use App\Models\FixtureMatch;
 use App\Models\Guardian;
 use App\Models\Invitation;
+use App\Models\MatchLineup;
 use App\Models\MatchSheet;
 use App\Models\MatchSheetEvent;
 use App\Models\MatchSheetIncident;
@@ -90,12 +91,7 @@ class ActionController extends Controller
         $category = $this->assertCategory($category);
         abort_unless($this->canManageClubs($request->user()), 403);
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:180'],
-            'country_code' => ['nullable', 'string', 'size:2', Rule::in(Countries::codes())],
-            'shield_file' => ['nullable', 'file', 'max:8192'],
-            'shield_data' => ['nullable', 'string', 'max:8000000'],
-        ]);
+        $data = $this->newClubData($request);
 
         $country = Countries::name($data['country_code'] ?? null) ?: 'Argentina';
         $existed = Delegation::query()
@@ -104,23 +100,8 @@ class ActionController extends Controller
             ->exists();
 
         $club = Delegation::resolveForClub((int) $category->tournament_id, $data['name'], $country);
-        $club->update(['country' => $country]);
-        $club->syncLinkedRecords();
 
-        $payload = ShieldPayload::fromRequest($request);
-        if ($payload) {
-            $club->storeLogo($payload[0], $payload[1]);
-        } else {
-            $club->reuseKnownLogoIfMissing();
-        }
-
-        $this->audit('create', $club, 'Club agregado desde Operación: '.$club->name);
-
-        return redirect()
-            ->route('workspace.categories.clubs', $category)
-            ->with('status', $existed
-                ? $club->name.' ya estaba en el torneo. Quedó actualizado y los equipos se vincularon.'
-                : $club->name.' quedó como club. Ahora podés sumarle equipos.');
+        return $this->finishNewClub($request, $category->tournament, $club, $data, $existed, route('workspace.categories.clubs', $category));
     }
 
     public function updateClub(Request $request, Category $category, Delegation $delegation): RedirectResponse
@@ -263,12 +244,7 @@ class ActionController extends Controller
         $this->assertTournament($tournament);
         abort_unless($this->canManageClubs($request->user()), 403);
 
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:180'],
-            'country_code' => ['nullable', 'string', 'size:2', Rule::in(Countries::codes())],
-            'shield_file' => ['nullable', 'file', 'max:8192'],
-            'shield_data' => ['nullable', 'string', 'max:8000000'],
-        ]);
+        $data = $this->newClubData($request);
 
         $country = Countries::name($data['country_code'] ?? null) ?: 'Argentina';
         $existed = Delegation::query()
@@ -277,23 +253,8 @@ class ActionController extends Controller
             ->exists();
 
         $club = Delegation::resolveForClub((int) $tournament->id, $data['name'], $country);
-        $club->update(['country' => $country]);
-        $club->syncLinkedRecords();
 
-        $payload = ShieldPayload::fromRequest($request);
-        if ($payload) {
-            $club->storeLogo($payload[0], $payload[1]);
-        } else {
-            $club->reuseKnownLogoIfMissing();
-        }
-
-        $this->audit('create', $club, 'Club agregado desde Operación: '.$club->name);
-
-        return redirect()
-            ->route('workspace.tournaments.clubs', $tournament)
-            ->with('status', $existed
-                ? $club->name.' ya estaba en el torneo. Quedó actualizado y los equipos se vincularon.'
-                : $club->name.' quedó como club. Ahora podés sumarle equipos.');
+        return $this->finishNewClub($request, $tournament, $club, $data, $existed, route('workspace.tournaments.clubs', $tournament));
     }
 
     public function updateTournamentClub(Request $request, Tournament $tournament, Delegation $delegation): RedirectResponse
@@ -493,6 +454,13 @@ class ActionController extends Controller
             ]);
         }
 
+        Player::assertUniqueOnTeam(
+            (int) $team->id,
+            $firstName,
+            $lastName,
+            $data['document_number'] ?? null
+        );
+
         $player = Player::create([
             'team_id' => $team->id,
             'first_name' => $firstName,
@@ -550,9 +518,7 @@ class ActionController extends Controller
             }
         }
 
-        return redirect()
-            ->to(route('workspace.categories.players.show', [$category, $player]).'#confirmacion-tutor')
-            ->with('status', $player->fullName().' quedó cargado. Completá el email del tutor abajo y tocá Generar enlace.');
+        return back()->with('status', $player->fullName().' quedó en el plantel.');
     }
 
     public function addMatch(Request $request, Category $category): RedirectResponse
@@ -1014,8 +980,9 @@ class ActionController extends Controller
         $this->audit('update', $player, 'Imagen cargada en ficha: '.$data['type']);
 
         $message = $data['type'] === 'Foto del jugador'
-            ? 'La foto del jugador quedó actualizada.'
-            : $data['type'].' quedó cargada. Tocá Ver para abrirla.';
+            ? 'La foto del jugador quedó actualizada y aprobada.'
+            : $data['type'].' quedó cargado y aprobado.';
+        $message .= ' '.$this->resendRepresentativeLink($request, $player);
 
         if ($request->expectsJson()) {
             return response()->json([
@@ -1026,6 +993,28 @@ class ActionController extends Controller
         }
 
         return back()->with('status', $message);
+    }
+
+    private function resendRepresentativeLink(Request $request, Player $player): string
+    {
+        $player->loadMissing('guardian');
+        $email = trim((string) ($player->latestGuardianInvitation()?->email ?: $player->guardian?->email));
+        if ($email === '') {
+            return 'Para que el representante lo modifique, generá el enlace con el correo del tutor.';
+        }
+
+        $mailSent = null;
+        app(GuardianInvitationService::class)->create(
+            $player,
+            $email,
+            $request->user()?->id,
+            sendMail: true,
+            mailSent: $mailSent
+        );
+
+        return $mailSent
+            ? 'Se reenvió el enlace al representante para que pueda modificar la ficha.'
+            : 'Se regeneró el enlace. Si el mail no llega, copialo o mandalo por WhatsApp.';
     }
 
     public function reviewDocument(Request $request, Category $category, PlayerDocument $document): RedirectResponse
@@ -1095,9 +1084,7 @@ class ActionController extends Controller
             ]);
         }
 
-        return redirect()
-            ->route('workspace.categories.inscriptions', $category)
-            ->with('status', $message);
+        return back()->with('status', $message);
     }
 
     public function updateTeam(Request $request, Category $category, Team $team): RedirectResponse
@@ -1336,6 +1323,84 @@ class ActionController extends Controller
         return back()->with('status', 'Orden de partidos guardado.');
     }
 
+    public function storeMatchLineup(Request $request, Category $category, FixtureMatch $match): RedirectResponse
+    {
+        $category = $this->assertCategory($category);
+        $this->assertMatch($category, $match);
+        abort_unless($this->canOperateMatch($request->user()), 403);
+
+        $request->validate([
+            'called' => ['nullable', 'array'],
+            'called.*' => ['integer'],
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['nullable', 'in:starter,sub'],
+            'shirts' => ['nullable', 'array'],
+            'shirts.*' => ['nullable', 'integer', 'min:0', 'max:99'],
+            'pos_x' => ['nullable', 'array'],
+            'pos_x.*' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'pos_y' => ['nullable', 'array'],
+            'pos_y.*' => ['nullable', 'integer', 'min:0', 'max:100'],
+        ]);
+
+        $onField = max(1, (int) ($category->players_on_field ?: 11));
+        $teamIds = array_values(array_filter([(int) $match->home_team_id, (int) $match->away_team_id]));
+        $players = Player::query()->whereIn('team_id', $teamIds)->get()->keyBy('id');
+        $called = collect($request->input('called', []))
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->filter(fn ($id) => $players->has($id))
+            ->values();
+
+        $starterCounts = [];
+        foreach ($called as $playerId) {
+            if ($request->input('roles.'.$playerId) !== 'starter') {
+                continue;
+            }
+            $teamId = (int) $players[$playerId]->team_id;
+            $starterCounts[$teamId] = ($starterCounts[$teamId] ?? 0) + 1;
+        }
+
+        foreach ($starterCounts as $count) {
+            if ($count > $onField) {
+                return back()->withErrors([
+                    'lineup' => 'Esta categoría juega con '.$onField.' en cancha. No pueden ser más titulares.',
+                ])->withInput();
+            }
+        }
+
+        $ordered = $called->sortBy(fn ($playerId) => $request->input('roles.'.$playerId) === 'starter' ? 0 : 1)->values();
+
+        MatchLineup::query()->where('match_id', $match->id)->delete();
+
+        foreach ($ordered as $index => $playerId) {
+            $player = $players[$playerId];
+            $starter = $request->input('roles.'.$playerId) === 'starter';
+            $shirt = $request->input('shirts.'.$playerId);
+            $shirt = $shirt === null || $shirt === '' ? null : (int) $shirt;
+            $posX = $request->input('pos_x.'.$playerId);
+            $posY = $request->input('pos_y.'.$playerId);
+
+            MatchLineup::query()->create([
+                'match_id' => $match->id,
+                'team_id' => $player->team_id,
+                'player_id' => $player->id,
+                'starter' => $starter,
+                'shirt_number' => $shirt,
+                'sort_order' => $index,
+                'pos_x' => $starter && $posX !== null && $posX !== '' ? (int) $posX : null,
+                'pos_y' => $starter && $posY !== null && $posY !== '' ? (int) $posY : null,
+            ]);
+
+            if ($shirt) {
+                $player->update(['jersey_number' => $shirt]);
+            }
+        }
+
+        $this->audit('update', $match, 'Alineación guardada ('.$onField.' en cancha).');
+
+        return back()->with('status', 'Alineación guardada. En cancha van '.$onField.' titulares por equipo.');
+    }
+
     public function saveMatchResult(Request $request, Category $category, FixtureMatch $match): RedirectResponse|JsonResponse
     {
         $category = $this->assertCategory($category);
@@ -1446,11 +1511,11 @@ class ActionController extends Controller
             $eventType = $data['type'] === 'yellow' ? 'staff_yellow' : 'staff_red';
             $staffId = $staff->id;
         } else {
-            if (filled($data['player_id'] ?? null)) {
-                $player = Player::query()->findOrFail($data['player_id']);
-                abort_unless((int) $player->team_id === (int) $data['team_id'], 422, 'Ese jugador no es de ese equipo.');
-                $playerId = $player->id;
-            }
+            abort_unless(filled($data['player_id'] ?? null), 422, 'Elegí el jugador. Goles, asistencias y tarjetas son del jugador, no del equipo.');
+
+            $player = Player::query()->findOrFail($data['player_id']);
+            abort_unless((int) $player->team_id === (int) $data['team_id'], 422, 'Ese jugador no es de ese equipo.');
+            $playerId = $player->id;
         }
 
         MatchSheetEvent::create([
@@ -1705,6 +1770,152 @@ class ActionController extends Controller
             ->with('delegate_welcome_open_whatsapp', (bool) $whatsappUrl);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
+    private function newClubData(Request $request): array
+    {
+        return $request->validate([
+            'name' => ['required', 'string', 'max:180'],
+            'country_code' => ['nullable', 'string', 'size:2', Rule::in(Countries::codes())],
+            'city' => ['nullable', 'string', 'max:120'],
+            'delegate_name' => ['nullable', 'string', 'max:160', 'required_with:delegate_email,delegate_phone'],
+            'delegate_email' => ['nullable', 'email', 'max:180', 'required_with:delegate_name,delegate_phone'],
+            'delegate_phone' => ['nullable', 'string', 'max:80', 'required_with:delegate_name,delegate_email'],
+            'category_ids' => ['nullable', 'array'],
+            'category_ids.*' => ['integer', 'distinct', 'exists:categories,id'],
+            'team_name' => ['nullable', 'string', 'max:180'],
+            'shield_file' => ['nullable', 'file', 'max:8192'],
+            'shield_data' => ['nullable', 'string', 'max:8000000'],
+        ], [], [
+            'category_ids' => 'categorías',
+            'category_ids.*' => 'categoría',
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function finishNewClub(Request $request, Tournament $tournament, Delegation $club, array $data, bool $existed, string $redirectTo): RedirectResponse
+    {
+        $country = Countries::name($data['country_code'] ?? null) ?: 'Argentina';
+        $club->update([
+            'country' => $country,
+            'city' => filled($data['city'] ?? null) ? $data['city'] : $club->city,
+            'delegate_name' => filled($data['delegate_name'] ?? null) ? $data['delegate_name'] : $club->delegate_name,
+            'delegate_email' => filled($data['delegate_email'] ?? null) ? $data['delegate_email'] : $club->delegate_email,
+            'delegate_phone' => filled($data['delegate_phone'] ?? null) ? $data['delegate_phone'] : $club->delegate_phone,
+        ]);
+        $club->syncLinkedRecords();
+
+        $payload = ShieldPayload::fromRequest($request);
+        if ($payload) {
+            $club->storeLogo($payload[0], $payload[1]);
+        } else {
+            $club->reuseKnownLogoIfMissing();
+        }
+
+        $this->audit('create', $club, 'Club agregado desde Operación: '.$club->name);
+
+        $linked = $this->linkClubCategory($tournament, $club, $data);
+        $status = $existed
+            ? $club->name.' ya estaba en el torneo. Quedó actualizado y los equipos se vincularon.'
+            : $club->name.' quedó como club.';
+        if ($linked) {
+            $status .= ' '.$linked;
+        }
+
+        if (filled($data['delegate_email'] ?? null) && $this->canAssignDelegates($request->user())) {
+            [$user, $created, $plainPassword] = $this->provisionClubDelegate(
+                $request,
+                $tournament,
+                $club,
+                (string) $data['delegate_name'],
+                (string) $data['delegate_email'],
+                (string) $data['delegate_phone'],
+            );
+            $welcome = app(DelegateWelcomeService::class)->send($user, $tournament, $club, $created, $plainPassword);
+
+            return redirect($redirectTo)
+                ->with('status', $status.' '.$user->name.' quedó como delegado.')
+                ->with('delegate_welcome_whatsapp', $welcome['whatsapp_url'] ?? null)
+                ->with('delegate_welcome_open_whatsapp', (bool) ($welcome['whatsapp_url'] ?? null));
+        }
+
+        return redirect($redirectTo)->with('status', $status);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function linkClubCategory(Tournament $tournament, Delegation $club, array $data): ?string
+    {
+        $ids = collect($data['category_ids'] ?? [])
+            ->map(fn ($id) => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return null;
+        }
+
+        $categories = Category::query()
+            ->where('tournament_id', $tournament->id)
+            ->whereIn('id', $ids)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        if ($categories->count() !== $ids->count()) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'category_ids' => 'Alguna categoría no pertenece a este torneo.',
+            ]);
+        }
+
+        $name = trim((string) ($data['team_name'] ?? '')) ?: $club->name;
+        $linked = [];
+        $already = [];
+
+        foreach ($categories as $category) {
+            $exists = Team::query()
+                ->where('category_id', $category->id)
+                ->where('delegation_id', $club->id)
+                ->whereRaw('LOWER(name) = ?', [mb_strtolower($name)])
+                ->exists();
+
+            if ($exists) {
+                $already[] = $category->name;
+                continue;
+            }
+
+            $team = Team::create([
+                'tournament_id' => $tournament->id,
+                'category_id' => $category->id,
+                'name' => $name,
+                'delegation_id' => $club->id,
+                'delegation_name' => $club->name,
+                'country_code' => $club->countryCode() ?: Countries::guessCode($club->country),
+                'player_capacity' => max(14, (int) $category->max_players),
+                'status' => 'approved',
+                'roster_open' => true,
+            ]);
+            $team->attachClub($club->id, $club->name);
+            $this->audit('create', $team, 'Equipo del club en '.$category->name.': '.$team->name);
+            $linked[] = $category->name;
+        }
+
+        $parts = [];
+        if ($linked !== []) {
+            $parts[] = $name.' quedó en '.implode(', ', $linked).'.';
+        }
+        if ($already !== []) {
+            $parts[] = 'Ya estaba en '.implode(', ', $already).'.';
+        }
+
+        return $parts === [] ? null : implode(' ', $parts);
+    }
+
     private function storeDelegateForClub(Request $request, Tournament $tournament, Delegation $club): array
     {
         abort_unless($this->canAssignDelegates($request->user()), 403);
@@ -1715,8 +1926,13 @@ class ActionController extends Controller
             'phone' => ['required', 'string', 'max:80'],
         ]);
 
-        $email = mb_strtolower(trim($data['email']));
-        $phone = trim($data['phone']);
+        return $this->provisionClubDelegate($request, $tournament, $club, $data['name'], $data['email'], $data['phone']);
+    }
+
+    private function provisionClubDelegate(Request $request, Tournament $tournament, Delegation $club, string $name, string $email, string $phone): array
+    {
+        $email = mb_strtolower(trim($email));
+        $phone = trim($phone);
         $role = Role::query()->where('slug', 'delegado')->firstOrFail();
         $user = User::query()->with('roles')->whereRaw('LOWER(email) = ?', [$email])->first();
         $created = false;
@@ -1729,13 +1945,14 @@ class ActionController extends Controller
 
             if ($blocked) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
+                    'delegate_email' => 'Ese correo ya está usado por otra persona que no es delegado.',
                     'email' => 'Ese correo ya está usado por otra persona que no es delegado.',
                 ]);
             }
         } else {
             $plainPassword = Str::password(12);
             $user = User::create([
-                'name' => $data['name'],
+                'name' => $name,
                 'email' => $email,
                 'phone' => $phone,
                 'password' => $plainPassword,
@@ -1746,7 +1963,7 @@ class ActionController extends Controller
         }
 
         $user->fill([
-            'name' => $data['name'],
+            'name' => $name,
             'phone' => $phone,
         ]);
         $user->save();
@@ -2435,21 +2652,28 @@ class ActionController extends Controller
     private function saveRounds(Request $request, Category $category): void
     {
         $data = $request->validate([
-            'rounds' => ['required', 'array', 'min:1'],
+            'cup_format' => ['nullable', 'string', 'in:none,oro_plata_bronce'],
+            'rounds' => ['nullable', 'array'],
             'rounds.*.name' => ['nullable', 'string', 'max:80'],
             'rounds.*.old' => ['nullable', 'string', 'max:80'],
+            'rounds.*.remove' => ['nullable'],
         ]);
 
-        $rounds = collect($data['rounds'])
+        $rounds = collect($data['rounds'] ?? [])
             ->map(fn (array $round) => [
                 'name' => trim((string) ($round['name'] ?? '')),
                 'old' => trim((string) ($round['old'] ?? '')),
+                'remove' => ! empty($round['remove']),
             ])
-            ->filter(fn (array $round) => $round['name'] !== '')
+            ->reject(fn (array $round) => $round['remove'] || $round['name'] === '')
             ->unique('name')
             ->values();
 
-        abort_if($rounds->isEmpty(), 422, 'Cargá al menos una fecha.');
+        $cupFormat = ($data['cup_format'] ?? 'none') === 'oro_plata_bronce'
+            ? 'oro_plata_bronce'
+            : 'none';
+
+        abort_if($rounds->isEmpty() && $cupFormat === 'none', 422, 'Dejá al menos una fecha o activá Copa Oro / Plata / Bronce.');
 
         foreach ($rounds as $round) {
             if ($round['old'] !== '' && $round['old'] !== $round['name']) {
@@ -2460,11 +2684,12 @@ class ActionController extends Controller
             }
         }
 
-        $names = $rounds->pluck('name')->all();
         $config = $category->workspace();
-        $config['rounds'] = $names;
+        $config['rounds'] = $rounds->pluck('name')->all();
+        $config['cup_format'] = $cupFormat;
         $category->workspace_config = $config;
         $category->save();
+        $this->audit('update', $category, 'Fechas de la categoría: '.implode(', ', $config['rounds']).($cupFormat === 'oro_plata_bronce' ? ' + Copa Oro/Plata/Bronce' : ''));
     }
 
     private function saveColumns(Request $request, Category $category): void
