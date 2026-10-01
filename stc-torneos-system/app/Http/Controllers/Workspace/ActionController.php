@@ -1342,7 +1342,7 @@ class ActionController extends Controller
             'pos_y.*' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
 
-        $onField = max(1, (int) ($category->players_on_field ?: 11));
+        $onField = $category->startersLimit();
         $teamIds = array_values(array_filter([(int) $match->home_team_id, (int) $match->away_team_id]));
         $players = Player::query()->whereIn('team_id', $teamIds)->get()->keyBy('id');
         $called = collect($request->input('called', []))
@@ -2509,15 +2509,18 @@ class ActionController extends Controller
             $data['status'] = 'active';
         }
 
+        $category->modality = $data['modality'];
         $category->update([
             'name' => $data['name'],
             'modality' => $data['modality'],
+            'format' => $data['modality'],
             'team_limit' => $data['team_limit'] ?? $category->team_limit,
             'max_players' => $data['max_players'] ?? $category->max_players,
             'competition_format' => $data['competition_format'] ?: $category->competition_format,
             'periods' => $data['periods'] ?? $category->periods,
             'period_duration' => $data['period_duration'] ?? $category->period_duration,
             'substitutes' => $data['substitutes'] ?? $category->substitutes,
+            'players_on_field' => $category->startersLimit(),
             'status' => $data['status'],
         ]);
 

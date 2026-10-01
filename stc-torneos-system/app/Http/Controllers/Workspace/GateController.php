@@ -296,12 +296,14 @@ class GateController extends Controller
             'image_path' => ['nullable', 'string', 'max:500'],
         ]);
 
+        $category->modality = $data['modality'];
         $category->update([
             'name' => $data['name'],
             'birth_year' => $data['birth_year'],
             'branch' => $data['branch'],
             'modality' => $data['modality'],
             'format' => $data['modality'],
+            'players_on_field' => $category->startersLimit(),
             'competition_format' => $data['competition_format'] ?? $category->competition_format,
             'groups_count' => $data['groups_count'] ?? $category->groups_count,
             'status' => $data['status'],

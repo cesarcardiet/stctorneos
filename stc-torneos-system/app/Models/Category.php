@@ -229,6 +229,26 @@ class Category extends Model
         return (string) $this->modality;
     }
 
+    /**
+     * Titulares en cancha según la modalidad (Fútbol 9 → 9).
+     */
+    public function startersLimit(): int
+    {
+        return self::startersFromLabel($this->modalityLabel())
+            ?? (((int) $this->players_on_field >= 1 && (int) $this->players_on_field <= 11) ? (int) $this->players_on_field : 11);
+    }
+
+    public static function startersFromLabel(?string $label): ?int
+    {
+        if (preg_match('/(\d{1,2})/', (string) $label, $match) !== 1) {
+            return null;
+        }
+
+        $count = (int) $match[1];
+
+        return ($count >= 1 && $count <= 11) ? $count : null;
+    }
+
     public function sortLetter(): string
     {
         return self::letterFromName((string) $this->name);

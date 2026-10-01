@@ -40,7 +40,7 @@ class WorkspaceCategorySetup
             'team_limit' => 24,
             'min_players' => 8,
             'max_players' => 22,
-            'players_on_field' => str_contains($modality, '5') ? 5 : (str_contains($modality, '7') ? 7 : 11),
+            'players_on_field' => Category::startersFromLabel($modality) ?? 11,
             'substitutes' => 7,
             'periods' => 2,
             'period_duration' => 25,

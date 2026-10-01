@@ -1504,11 +1504,18 @@ function initMatchLineup() {
         row.classList.toggle('is-off', role !== 'starter');
     };
 
-    root.querySelectorAll('[data-lineup-row]').forEach((row) => paintRole(row));
     ['home', 'away'].forEach((teamKey) => {
-        if (starterCount(teamKey) > onField) {
-            showLimit();
-        }
+        let kept = 0;
+        root.querySelectorAll(`[data-lineup-row][data-team-key="${teamKey}"]`).forEach((row) => {
+            const role = row.querySelector('[data-role]');
+            if (role?.value === 'starter') {
+                kept += 1;
+                if (kept > onField) {
+                    role.value = 'sub';
+                }
+            }
+            paintRole(row);
+        });
     });
 
     root.querySelectorAll('[data-lineup-tab]').forEach((tab) => {

@@ -1,6 +1,7 @@
 @php
-    $onField = max(1, (int) ($category->players_on_field ?: 11));
+    $onField = $category->startersLimit();
     $saved = $match->lineups->keyBy('player_id');
+    $starterSlots = ['home' => 0, 'away' => 0];
     $sides = [
         ['key' => 'home', 'team' => $match->homeTeam],
         ['key' => 'away', 'team' => $match->awayTeam],
@@ -10,7 +11,7 @@
 <x-ws-modal id="lineup" title="Alineación" class="is-lineup" data-ws-auto-open="{{ $errors->has('lineup') ? '1' : '0' }}">
     <form method="post" action="{{ route('workspace.categories.matches.lineup', [$category, $match]) }}" data-ws-lineup data-on-field="{{ $onField }}">
         @csrf
-        <p class="ws-lineup-note">Todos cargan como <b>titulares</b>. Marcá al que no juega para pasarlo a suplente. En cancha van <b>{{ $onField }}</b>.</p>
+        <p class="ws-lineup-note">En cancha van <b>{{ $onField }}</b> titulares, según la modalidad. Si hay más jugadores, el resto queda como <b>suplente</b> y no se pueden marcar más titulares.</p>
         @error('lineup')
             <p class="ws-lineup-alert">{{ $message }}</p>
         @enderror
@@ -29,7 +30,12 @@
                     @forelse ($side['team']?->players ?? [] as $player)
                         @php
                             $row = $saved->get($player->id);
-                            $starter = $row ? (bool) $row->starter : true;
+                            $sideKey = $side['key'];
+                            $wantsStarter = $row ? (bool) $row->starter : true;
+                            $starter = $wantsStarter && $starterSlots[$sideKey] < $onField;
+                            if ($starter) {
+                                $starterSlots[$sideKey]++;
+                            }
                             $shirt = $row?->shirt_number ?? $player->jersey_number;
                         @endphp
                         <div
