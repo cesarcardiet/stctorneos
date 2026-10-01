@@ -15,6 +15,10 @@
     </p>
 
     <section class="ws-ficha">
+        @if ($canOperateMatch && ! ($sheet?->locked))
+            @include('workspace.partials.live-panel')
+        @endif
+
         @include('workspace.partials.match-poster')
 
         @if ($canOperateMatch || $canScheduleMatches)
@@ -98,6 +102,8 @@
                 @endif
             </p>
             @if ($canOperateMatch && ! ($sheet?->locked))
+                <details class="lv-manual">
+                <summary>Carga manual</summary>
                 <p class="ws-muted ws-planilla-hint">Jugadas del partido y penalizaciones Fair Play (padres, cuerpo técnico, puntualidad) impactan en Rankings y en la tabla de disciplina.</p>
                 <form class="ws-inline-add ws-planilla-events" method="post" action="{{ route('workspace.categories.matches.events', [$category, $match]) }}">
                     @csrf
@@ -159,8 +165,10 @@
                     <input type="text" name="moment" placeholder="Min / momento">
                     <button type="submit" class="ws-btn">Cargar penalización</button>
                 </form>
+                </details>
             @endif
 
+            @unless ($canOperateMatch && ! ($sheet?->locked))
             <h3 class="ws-plays-title">Jugadas del partido</h3>
 
             @if (($sheet?->events ?? collect())->isNotEmpty())
@@ -207,6 +215,7 @@
                     <li class="ws-muted">{{ ! empty($canViewPlanillas) ? 'Todavía no hay eventos en la planilla.' : 'Todavía no hay goles, tarjetas ni cambios registrados.' }}</li>
                 @endforelse
             </ul>
+            @endunless
 
             <h3 class="ws-plays-title">Penalizaciones Fair Play</h3>
             <ul class="ws-plays-list ws-incidents-list">

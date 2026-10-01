@@ -2026,7 +2026,28 @@ class WorkspaceOperationTest extends TestCase
             ->get(route('workspace.categories.matches.show', [$category, $match]))
             ->assertOk()
             ->assertSee('data-ws-status-banner', false)
-            ->assertSee('En juego');
+            ->assertSee('En juego')
+            ->assertSee('Partido en vivo')
+            ->assertSee('data-live-panel', false);
+
+        $this->actingAs($admin)
+            ->post(route('workspace.categories.matches.events', [$category, $match]), [
+                'type' => 'goal',
+                'team_id' => $match->home_team_id,
+                'player_id' => $player->id,
+                'minute' => 12,
+            ])
+            ->assertRedirect();
+
+        $goal = $match->fresh()->sheet->events()->where('type', 'goal')->first();
+        $this->assertNotNull($goal);
+        $this->assertSame(1, (int) $match->fresh()->home_score);
+
+        $this->actingAs($admin)
+            ->delete(route('workspace.categories.matches.events.destroy', [$category, $match, $goal]))
+            ->assertRedirect();
+
+        $this->assertSame(0, (int) $match->fresh()->home_score);
 
         $this->actingAs($admin)
             ->post(route('workspace.categories.matches.events', [$category, $match]), [

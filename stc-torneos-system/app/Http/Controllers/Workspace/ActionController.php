@@ -1410,7 +1410,7 @@ class ActionController extends Controller
         $data = $request->validate([
             'home_score' => ['required', 'integer', 'min:0', 'max:30'],
             'away_score' => ['required', 'integer', 'min:0', 'max:30'],
-            'status' => ['required', 'string', 'in:scheduled,live,finished,validated,suspended,rescheduled'],
+            'status' => ['required', 'string', 'in:scheduled,live,paused,finished,validated,suspended,rescheduled,reopened'],
         ]);
 
         $match->update([
@@ -1427,7 +1427,7 @@ class ActionController extends Controller
             ]);
         }
 
-        if (in_array($match->status, ['live', 'scheduled', 'suspended', 'rescheduled'], true)) {
+        if (in_array($match->status, ['live', 'paused', 'scheduled', 'suspended', 'rescheduled', 'reopened'], true)) {
             $this->unlockSheet($match);
         }
 
@@ -1488,6 +1488,7 @@ class ActionController extends Controller
             'team_staff_id' => ['nullable', 'exists:team_staff,id'],
             'team_id' => ['required', 'exists:teams,id'],
             'minute' => ['nullable', 'integer', 'min:0', 'max:130'],
+            'assist_player_id' => ['nullable', 'exists:players,id'],
         ]);
 
         abort_unless(in_array((int) $data['team_id'], [(int) $match->home_team_id, (int) $match->away_team_id], true), 422);
@@ -1527,6 +1528,23 @@ class ActionController extends Controller
             'minute' => $data['minute'] ?? null,
         ]);
 
+        if ($data['type'] === 'goal' && filled($data['assist_player_id'] ?? null) && (int) $data['assist_player_id'] !== (int) $playerId) {
+            $assist = Player::query()->findOrFail($data['assist_player_id']);
+            abort_unless((int) $assist->team_id === (int) $data['team_id'], 422, 'La asistencia tiene que ser del mismo equipo.');
+
+            MatchSheetEvent::create([
+                'match_sheet_id' => $sheet->id,
+                'type' => 'assist',
+                'player_id' => $assist->id,
+                'team_id' => $data['team_id'],
+                'minute' => $data['minute'] ?? null,
+            ]);
+        }
+
+        if (in_array($match->status, ['scheduled', 'rescheduled'], true)) {
+            $match->update(['status' => 'live']);
+        }
+
         $sheet->load(['events', 'match']);
         $sheet->recalcScore();
         $sheet->update(['status' => 'loading']);
@@ -1536,6 +1554,27 @@ class ActionController extends Controller
         ]);
 
         return back()->with('status', 'Evento cargado en la planilla.');
+    }
+
+    public function destroySheetEvent(Category $category, FixtureMatch $match, MatchSheetEvent $event): RedirectResponse
+    {
+        $category = $this->assertCategory($category);
+        $this->assertMatch($category, $match);
+        abort_unless($this->canOperateMatch(auth()->user()), 403);
+
+        $sheet = $this->sheetFor($match);
+        abort_if($sheet->locked, 403, 'La planilla ya está cerrada.');
+        abort_unless((int) $event->match_sheet_id === (int) $sheet->id, 404);
+
+        $event->delete();
+        $sheet->load(['events', 'match']);
+        $sheet->recalcScore();
+        $match->update([
+            'home_score' => $sheet->home_score,
+            'away_score' => $sheet->away_score,
+        ]);
+
+        return back()->with('status', 'Jugada eliminada.');
     }
 
     public function addSheetIncident(Request $request, Category $category, FixtureMatch $match): RedirectResponse

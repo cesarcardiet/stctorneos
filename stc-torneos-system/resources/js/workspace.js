@@ -1661,3 +1661,251 @@ document.querySelectorAll('[data-copy-guardian-link]').forEach((button) => {
         }
     });
 });
+
+function initLivePanel() {
+    const root = document.querySelector('[data-live-panel]');
+    if (!root || root.dataset.bound === '1') {
+        return;
+    }
+
+    root.dataset.bound = '1';
+
+    const clockEl = root.querySelector('[data-live-clock]');
+    const minuteInput = root.querySelector('[data-live-minute]');
+    const incidentMinute = root.querySelector('[data-live-incident-minute]');
+    const key = 'stc-live-clock-' + root.dataset.matchId;
+    const status = root.dataset.status || '';
+    let stored = null;
+
+    try {
+        stored = JSON.parse(localStorage.getItem(key) || 'null');
+    } catch (error) {
+        stored = null;
+    }
+
+    let state = stored && typeof stored.elapsed === 'number'
+        ? stored
+        : { running: false, elapsed: 0, tickAt: Date.now() };
+
+    if (status === 'paused') {
+        state.running = false;
+    } else if (status === 'live') {
+        if (!state.running) {
+            state.running = true;
+            state.tickAt = Date.now();
+        }
+    } else {
+        state.running = false;
+    }
+
+    const current = () => (state.running
+        ? state.elapsed + Math.max(0, Math.floor((Date.now() - state.tickAt) / 1000))
+        : state.elapsed);
+
+    const persist = () => {
+        if (state.running) {
+            state.elapsed = current();
+            state.tickAt = Date.now();
+        }
+        localStorage.setItem(key, JSON.stringify(state));
+    };
+
+    const render = () => {
+        const total = current();
+        const minutes = Math.floor(total / 60);
+        const seconds = total % 60;
+        if (clockEl) {
+            clockEl.textContent = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+        if (minuteInput) {
+            minuteInput.value = String(Math.min(130, minutes));
+        }
+        if (incidentMinute) {
+            incidentMinute.value = minutes + "'";
+        }
+    };
+
+    render();
+    window.setInterval(render, 250);
+
+    root.querySelector('[data-live-pause]')?.addEventListener('click', () => {
+        state.elapsed = current();
+        state.running = false;
+        state.tickAt = Date.now();
+        persist();
+    });
+
+    root.querySelector('[data-live-start]')?.addEventListener('click', () => {
+        if (!state.running) {
+            state.running = true;
+            state.tickAt = Date.now();
+        }
+        persist();
+    });
+
+    const picker = root.querySelector('[data-live-picker]');
+    const title = root.querySelector('[data-live-picker-title]');
+    const hint = root.querySelector('[data-live-picker-hint]');
+    const sides = root.querySelector('[data-live-sides]');
+    const incidents = root.querySelector('[data-live-incidents]');
+    const staffToggle = root.querySelector('[data-live-staff-toggle]');
+    const skip = root.querySelector('[data-live-skip]');
+    const eventForm = root.querySelector('[data-live-event-form]');
+    const incidentForm = root.querySelector('[data-live-incident-form]');
+    const labels = {
+        goal: '¿Quién hizo el gol?',
+        assist: '¿Quién dio la asistencia?',
+        yellow: '¿A quién es la amarilla?',
+        red: '¿A quién es la roja?',
+        substitution: '¿Quién entra en el cambio?',
+        incident: 'Incidencia',
+    };
+    let mode = null;
+    let scorer = null;
+
+    const showPlayers = (teamId) => {
+        sides.hidden = false;
+        incidents.hidden = true;
+        root.querySelectorAll('[data-live-side]').forEach((side) => {
+            side.hidden = Boolean(teamId) && side.dataset.teamId !== String(teamId);
+        });
+    };
+
+    const setWho = (who) => {
+        const staff = who === 'staff';
+        root.querySelectorAll('[data-live-player]').forEach((button) => {
+            button.hidden = staff;
+        });
+        root.querySelectorAll('[data-live-staff]').forEach((button) => {
+            button.hidden = !staff;
+        });
+        staffToggle?.querySelectorAll('button').forEach((button) => {
+            button.classList.toggle('is-on', button.dataset.liveWho === who);
+        });
+    };
+
+    const open = (type) => {
+        mode = type;
+        scorer = null;
+        title.textContent = labels[type] || 'Elegí';
+        hint.textContent = type === 'goal' ? 'Después podés marcar quién asistió.' : '';
+        skip.hidden = true;
+        staffToggle.hidden = !['yellow', 'red'].includes(type);
+        if (type === 'incident') {
+            sides.hidden = true;
+            incidents.hidden = false;
+            hint.textContent = 'Elegí el equipo y después el motivo.';
+        } else {
+            showPlayers(null);
+            setWho('player');
+        }
+        picker.hidden = false;
+    };
+
+    const submitEvent = (payload) => {
+        persist();
+        render();
+        eventForm.querySelector('[data-live-type]').value = payload.type;
+        eventForm.querySelector('[data-live-actor]').value = payload.actor || 'player';
+        eventForm.querySelector('[data-live-team]').value = payload.teamId || '';
+        eventForm.querySelector('[data-live-player-input]').value = payload.playerId || '';
+        eventForm.querySelector('[data-live-staff-input]').value = payload.staffId || '';
+        eventForm.querySelector('[data-live-assist]').value = payload.assistId || '';
+        if (eventForm.requestSubmit) {
+            eventForm.requestSubmit();
+        } else {
+            eventForm.submit();
+        }
+    };
+
+    root.querySelectorAll('[data-live-action]').forEach((button) => {
+        button.addEventListener('click', () => open(button.dataset.liveAction));
+    });
+
+    root.querySelector('[data-live-picker-close]')?.addEventListener('click', () => {
+        picker.hidden = true;
+        mode = null;
+    });
+
+    staffToggle?.querySelectorAll('button').forEach((button) => {
+        button.addEventListener('click', () => setWho(button.dataset.liveWho));
+    });
+
+    root.querySelectorAll('[data-live-player]').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (!mode || mode === 'incident') {
+                return;
+            }
+            if (mode === 'goal' && !scorer) {
+                scorer = { playerId: button.dataset.playerId, teamId: button.dataset.teamId };
+                title.textContent = '¿Quién dio la asistencia?';
+                hint.textContent = 'Si no hubo, seguí sin asistencia.';
+                skip.hidden = false;
+                showPlayers(scorer.teamId);
+                button.hidden = true;
+                return;
+            }
+            submitEvent({
+                type: mode,
+                teamId: scorer ? scorer.teamId : button.dataset.teamId,
+                playerId: scorer ? scorer.playerId : button.dataset.playerId,
+                assistId: scorer ? button.dataset.playerId : '',
+            });
+        });
+    });
+
+    skip?.addEventListener('click', () => {
+        if (!scorer) {
+            return;
+        }
+        submitEvent({
+            type: 'goal',
+            teamId: scorer.teamId,
+            playerId: scorer.playerId,
+        });
+    });
+
+    root.querySelectorAll('[data-live-staff]').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (!['yellow', 'red'].includes(mode)) {
+                return;
+            }
+            submitEvent({
+                type: mode,
+                actor: 'staff',
+                teamId: button.dataset.teamId,
+                staffId: button.dataset.staffId,
+            });
+        });
+    });
+
+    let incidentTeam = '';
+    root.querySelectorAll('[data-live-incident-team]').forEach((button) => {
+        button.addEventListener('click', () => {
+            incidentTeam = button.dataset.teamId;
+            root.querySelectorAll('[data-live-incident-team]').forEach((item) => {
+                item.classList.toggle('is-on', item === button);
+            });
+        });
+    });
+
+    root.querySelectorAll('[data-live-incident]').forEach((button) => {
+        button.addEventListener('click', () => {
+            if (!incidentTeam) {
+                hint.textContent = 'Primero elegí el equipo.';
+                return;
+            }
+            persist();
+            render();
+            incidentForm.querySelector('[data-live-kind]').value = button.dataset.liveIncident;
+            incidentForm.querySelector('[data-live-incident-team-input]').value = incidentTeam;
+            if (incidentForm.requestSubmit) {
+                incidentForm.requestSubmit();
+            } else {
+                incidentForm.submit();
+            }
+        });
+    });
+}
+
+initLivePanel();

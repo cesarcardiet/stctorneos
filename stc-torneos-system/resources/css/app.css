@@ -16787,3 +16787,406 @@ button.ws-doc-thumb.is-file {
     font-weight: 800 !important;
     line-height: 1.2;
 }
+
+.lv-panel {
+    margin: 0 0 1rem;
+    padding: 1rem 1rem .9rem;
+    border: 1px solid rgba(180, 200, 220, .7);
+    border-radius: 22px;
+    background: #f3f6fb;
+    color: #122033;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, .18);
+}
+
+.lv-panel button {
+    font-family: inherit;
+}
+
+.lv-panel .ws-plays-title {
+    margin: .85rem 0 .4rem;
+    color: #122033;
+}
+
+.lv-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .75rem;
+}
+
+.lv-title {
+    font-size: .95rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.lv-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .28rem .7rem;
+    border-radius: 999px;
+    background: #1d4ed8;
+    color: #fff;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.lv-chip i {
+    width: .45rem;
+    height: .45rem;
+    border-radius: 50%;
+    background: #7dd3fc;
+}
+
+.lv-chip.is-warn {
+    background: #b45309;
+}
+
+.lv-chip.is-soon,
+.lv-chip.is-done {
+    background: #334155;
+}
+
+.lv-meta {
+    margin: .45rem 0 .8rem;
+    color: #5c6b80;
+    font-size: .78rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.lv-score {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: .6rem;
+    align-items: center;
+    margin-bottom: .85rem;
+    padding: .85rem .7rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #fff;
+    text-align: center;
+}
+
+.lv-score img {
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+}
+
+.lv-score strong {
+    display: block;
+    margin-top: .35rem;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.lv-score > b {
+    color: #16325c;
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.lv-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .55rem;
+}
+
+.lv-actions button {
+    display: grid;
+    justify-items: center;
+    gap: .25rem;
+    min-height: 92px;
+    padding: .7rem .35rem;
+    border: 1px solid #e6edf5;
+    border-radius: 16px;
+    background: #fff;
+    color: #16325c;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(16, 32, 51, .05);
+}
+
+.lv-actions button svg {
+    width: 28px;
+    height: 28px;
+    color: #1d4ed8;
+}
+
+.lv-actions button:hover {
+    transform: none;
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+}
+
+.lv-picker {
+    margin-top: .75rem;
+    padding: .8rem;
+    border-radius: 16px;
+    background: #fff;
+    border: 1px solid #dbe4ef;
+}
+
+.lv-picker header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: .5rem;
+}
+
+.lv-picker header strong {
+    font-size: .9rem;
+    font-weight: 800;
+}
+
+.lv-picker header button,
+.lv-skip,
+.lv-picker-tools button,
+.lv-incidents button {
+    border: 1px solid #d5deea;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #16325c;
+    font-size: .72rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.lv-picker header button {
+    padding: .3rem .7rem;
+}
+
+.lv-picker p {
+    margin: .35rem 0 .6rem;
+    color: #5c6b80;
+    font-size: .75rem;
+}
+
+.lv-picker-tools {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .6rem;
+}
+
+.lv-picker-tools button,
+.lv-incident-teams button {
+    padding: .35rem .7rem;
+}
+
+.lv-picker-tools button.is-on,
+.lv-incident-teams button.is-on {
+    background: #1d4ed8;
+    color: #fff;
+    border-color: #1d4ed8;
+}
+
+.lv-sides {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .6rem;
+}
+
+.lv-sides > div {
+    display: grid;
+    align-content: start;
+    gap: .35rem;
+    max-height: 280px;
+    overflow: auto;
+}
+
+.lv-sides > div > span {
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #5c6b80;
+}
+
+.lv-sides button {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    width: 100%;
+    padding: .45rem .5rem;
+    border: 1px solid #e6edf5;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #122033;
+    font-size: .75rem;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+.lv-sides button b {
+    min-width: 1.4rem;
+    color: #1d4ed8;
+    font-size: .78rem;
+}
+
+.lv-sides button small,
+.lv-sides p {
+    color: #7b8798;
+    font-size: .65rem;
+    font-weight: 700;
+}
+
+.lv-incidents {
+    display: grid;
+    gap: .4rem;
+}
+
+.lv-incident-teams {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-bottom: .2rem;
+}
+
+.lv-incidents > button,
+.lv-skip {
+    padding: .55rem .7rem;
+    text-align: left;
+}
+
+.lv-skip {
+    margin-top: .6rem;
+}
+
+.lv-events {
+    list-style: none;
+    margin: .8rem 0 .7rem;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    background: #fff;
+    overflow: hidden;
+}
+
+.lv-events li {
+    display: grid;
+    grid-template-columns: 2.4rem auto minmax(0, 1fr);
+    gap: .45rem;
+    align-items: center;
+    padding: .55rem .75rem;
+    border-top: 1px solid #eef2f7;
+    font-size: .78rem;
+}
+
+.lv-events li:first-child {
+    border-top: 0;
+}
+
+.lv-events b {
+    color: #5c6b80;
+    font-weight: 800;
+}
+
+.lv-events span {
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+}
+
+.lv-events span.is-goal { color: #1d4ed8; }
+.lv-events span.is-assist { color: #0369a1; }
+.lv-events span.is-yellow { color: #a16207; }
+.lv-events span.is-red { color: #dc2626; }
+.lv-events span.is-substitution { color: #0f766e; }
+
+.lv-events em {
+    font-style: normal;
+    font-weight: 700;
+}
+
+.lv-empty {
+    display: block !important;
+    color: #7b8798;
+    font-size: .75rem !important;
+}
+
+.lv-foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+}
+
+.lv-foot form {
+    margin: 0;
+}
+
+.lv-pause,
+.lv-finish,
+.lv-undo {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 14px;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.lv-pause {
+    border: 1px solid #d5deea;
+    background: #fff;
+    color: #16325c;
+}
+
+.lv-finish {
+    border: 0;
+    background: #e11d2e;
+    color: #fff;
+}
+
+.lv-undo {
+    margin-top: .45rem;
+    border: 1px solid #d5deea;
+    background: transparent;
+    color: #5c6b80;
+}
+
+.lv-pause:hover,
+.lv-finish:hover,
+.lv-undo:hover,
+.lv-sides button:hover,
+.lv-picker button:hover {
+    transform: none;
+}
+
+.lv-manual {
+    margin: .4rem 0 .8rem;
+}
+
+.lv-manual summary {
+    cursor: pointer;
+    color: var(--stc-cyan);
+    font-size: .78rem;
+    font-weight: 800;
+}
+
+@media (max-width: 720px) {
+    .lv-sides {
+        grid-template-columns: 1fr;
+    }
+
+    .lv-score img {
+        width: 48px;
+        height: 48px;
+    }
+
+    .lv-score > b {
+        font-size: 1.35rem;
+    }
+}
