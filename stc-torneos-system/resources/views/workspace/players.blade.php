@@ -58,10 +58,11 @@
             <div class="ws-roster-rows">
                 @forelse ($players as $player)
                     @php
-                        $statusTone = match ($player->status) {
-                            'approved', 'enabled' => 'ok',
-                            'rejected', 'blocked' => 'danger',
-                            'observed' => 'warn',
+                        $statusLabel = $player->rosterListLabel();
+                        $statusTone = match ($statusLabel) {
+                            'Aprobado' => 'ok',
+                            'Rechazado', 'Bloqueado' => 'danger',
+                            'Observado' => 'warn',
                             default => 'neutral',
                         };
                     @endphp
@@ -98,9 +99,9 @@
 
                         <span class="ws-roster-age">{{ $player->age() ? $player->age().' años' : '—' }}</span>
 
-                        <span @class(['ws-player-status', 'ws-roster-status', 'is-'.$statusTone])>{{ $player->statusLabel() }}</span>
+                        <span @class(['ws-player-status', 'ws-roster-status', 'is-'.$statusTone])>{{ $statusLabel }}</span>
 
-                        <span class="ws-roster-chevron" aria-hidden="true">›</span>
+                        <span class="ws-ficha-btn">Ficha</span>
                     </a>
                 @empty
                     <div class="ws-empty ws-roster-empty">No hay jugadores en este recorte.</div>

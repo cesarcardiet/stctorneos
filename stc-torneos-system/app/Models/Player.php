@@ -124,15 +124,30 @@ class Player extends Model
      */
     public function rosterPhaseLabel(): string
     {
+        return $this->rosterListLabel();
+    }
+
+    public function rosterListLabel(): string
+    {
         return match ($this->status) {
-            'enabled' => 'Habilitado',
-            'approved' => 'Aprobado',
             'observed' => 'Observado',
             'rejected' => 'Rechazado',
             'blocked' => 'Bloqueado',
-            'awaiting_guardian', 'draft' => 'Falta el tutor',
-            default => 'Esperando aprobación de operación',
+            default => ($this->hasUploadedFile() || in_array($this->status, ['approved', 'enabled'], true))
+                ? 'Aprobado'
+                : 'Falta cargar',
         };
+    }
+
+    public function hasUploadedFile(): bool
+    {
+        if ($this->storedPhotoPath()) {
+            return true;
+        }
+
+        $this->loadMissing('documents');
+
+        return $this->documents->contains(fn ($document) => filled($document->file_path));
     }
 
     public function guardianDisplayName(): ?string

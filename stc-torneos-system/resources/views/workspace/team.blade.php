@@ -99,7 +99,7 @@
 
         <article class="ws-card">
             <p class="stc-eyebrow">Plantel ({{ $team->players->count() }})</p>
-            <p class="ws-muted">Cada fila es un jugador. Un solo estado: falta el tutor, aprobación de operación, o habilitado.</p>
+            <p class="ws-muted">Si el jugador tiene un archivo cargado, figura como aprobado.</p>
             @if ($rosterLockReason ?? null)
                 <div class="ws-alert">{{ $rosterLockReason }}</div>
             @endif
@@ -127,7 +127,7 @@
                             <strong>{{ strtoupper($player->last_name) }} {{ $player->first_name }}</strong>
                             <span>{{ $player->rosterPhaseLabel() }}@if ($player->guardianDisplayName()) · Tutor: {{ $player->guardianDisplayName() }}@endif</span>
                         </div>
-                        <b>›</b>
+                        <span class="ws-ficha-btn">Ficha</span>
                     </a>
                 @empty
                     <p class="ws-muted">Todavía no hay jugadores en este equipo.</p>

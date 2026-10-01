@@ -9187,7 +9187,7 @@ html:has(.stc-body),
 .ws-roster-columns,
 .ws-roster-row {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1.45fr) minmax(0, 1fr) 84px 168px 16px;
+    grid-template-columns: 52px minmax(0, 1.45fr) minmax(0, 1fr) 84px minmax(120px, 168px) 88px;
     gap: .4rem .85rem;
     align-items: center;
     padding: .7rem 1rem;
@@ -9315,12 +9315,25 @@ html:has(.stc-body),
     text-align: center;
 }
 
-.ws-roster-chevron {
-    color: var(--stc-cyan);
-    font-size: 1.2rem;
-    font-weight: 700;
-    opacity: .7;
-    text-align: right;
+.ws-ficha-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: .35rem .9rem;
+    border-radius: 999px;
+    background: #1d6dff;
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 800;
+    letter-spacing: .02em;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.ws-roster-row:hover .ws-ficha-btn,
+.ws-list-row:hover .ws-ficha-btn {
+    background: #3b82f6;
 }
 
 .ws-roster-empty {
@@ -9463,6 +9476,13 @@ html:has(.stc-body),
     display: block;
     color: var(--stc-muted);
     font-size: .84rem;
+}
+
+.ws-list-row .ws-ficha-btn,
+.ws-roster-row .ws-ficha-btn {
+    display: inline-flex;
+    color: #fff;
+    font-size: .78rem;
 }
 
 .ws-person-board {
@@ -9810,7 +9830,7 @@ html:has(.stc-body),
     .ws-roster-team { grid-area: team; font-size: .74rem; }
     .ws-roster-age { display: none; }
     .ws-roster-status { grid-area: status; justify-self: end; align-self: start; }
-    .ws-roster-chevron { grid-area: chevron; align-self: start; }
+    .ws-ficha-btn { grid-area: chevron; align-self: center; justify-self: end; }
 }
 
 .ws-modal-card header {
