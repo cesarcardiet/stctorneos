@@ -32,7 +32,7 @@
             <div class="standings-scroll">
                 <div
                     class="standings-table ws-table"
-                    style="--st-cols: {{ max(1, $orderedColumns->count()) }}; --st-mobile-cols: {{ max(1, $orderedColumns->intersect(['pts', 'j', 'g', 'e', 'p', 'gf'])->count()) }}"
+                    style="--st-cols: {{ max(1, $orderedColumns->count()) }}"
                     @if (! empty($canEdit) && $rows->isNotEmpty())
                         data-ws-standings-sort
                         data-group-key="{{ $groupKey }}"
