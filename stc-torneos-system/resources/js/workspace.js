@@ -85,18 +85,25 @@ document.addEventListener('click', (event) => {
             openLink.hidden = false;
         }
 
+        openWorkspaceModal('doc-preview');
+
         if (kind === 'image' && image) {
-            image.src = src;
             image.alt = title;
             image.hidden = false;
+            image.src = src;
+            image.onerror = () => {
+                image.hidden = true;
+                if (empty) {
+                    empty.hidden = false;
+                }
+            };
         } else if (frame) {
-            frame.src = src;
             frame.hidden = false;
+            frame.src = src;
         } else if (empty) {
             empty.hidden = false;
         }
 
-        openWorkspaceModal('doc-preview');
         return;
     }
 

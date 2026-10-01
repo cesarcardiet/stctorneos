@@ -15769,10 +15769,18 @@ button.ws-doc-thumb.is-file {
     .ws-player-photo img,
     .ws-roster-photo,
     .ficha-photo-preview-wrap img,
-    .ws-doc-thumb img,
-    .ws-doc-preview-body img {
+    .ws-doc-thumb img {
         max-width: none !important;
         max-height: none !important;
+    }
+
+    .ws-doc-preview-body img {
+        display: block !important;
+        width: auto !important;
+        height: auto !important;
+        max-width: min(100%, 720px) !important;
+        max-height: min(70vh, 720px) !important;
+        object-fit: contain !important;
     }
 
     .stc-pcard-photo,
