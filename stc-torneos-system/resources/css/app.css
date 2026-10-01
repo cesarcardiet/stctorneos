@@ -15300,23 +15300,45 @@ button.ws-doc-thumb.is-file {
         font-size: 1.35rem;
     }
 
+    .ws-standings,
+    .ws-standings-main {
+        min-width: 0;
+        max-width: 100%;
+    }
+
     .ws-standings-main .standings-card {
-        overflow: visible;
+        overflow: hidden;
+        max-width: 100%;
     }
 
     .ws-standings-main .standings-scroll {
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        margin: 0 -.15rem;
+        max-width: 100%;
+        margin: 0;
         padding-bottom: .35rem;
+    }
+
+    .ws-standings-main .standings-table {
+        overflow: visible;
+        width: max-content;
+        min-width: 100%;
     }
 
     .ws-standings-main .standings-table .table-head,
     .ws-standings-main .standings-table .table-row {
-        grid-template-columns: 32px minmax(128px, 1.35fr) repeat(var(--st-cols, 10), minmax(36px, 1fr));
-        min-width: 640px;
-        gap: .2rem;
-        padding: .55rem .5rem;
+        grid-template-columns: 22px 124px repeat(var(--st-cols, 10), 40px);
+        width: max-content;
+        min-width: 0;
+        gap: 0;
+        padding: .45rem 0;
+    }
+
+    .ws-standings-main .standings-table .st-position,
+    .ws-standings-main .standings-table .st-team {
+        position: sticky;
+        z-index: 3;
+        background: #071426;
     }
 
     .ws-standings-main .standings-table .st-position {
@@ -15324,7 +15346,28 @@ button.ws-doc-thumb.is-file {
     }
 
     .ws-standings-main .standings-table .st-team {
-        left: 32px;
+        left: 22px;
+        box-shadow: 10px 0 12px rgba(0, 0, 0, .28);
+    }
+
+    .ws-standings-main .standings-table .table-row:nth-child(odd) .st-position,
+    .ws-standings-main .standings-table .table-row:nth-child(odd) .st-team {
+        background: #0a1c34;
+    }
+
+    .ws-standings-main .standings-table .table-head .st-position,
+    .ws-standings-main .standings-table .table-head .st-team {
+        z-index: 4;
+        background: #020917;
+    }
+
+    .ws-standings-main .standings-table .table-row .st-position b {
+        width: auto;
+        height: auto;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        font-size: .72rem;
     }
 
     .ws-standings-main .standings-table .ws-drag-handle,
@@ -15332,20 +15375,44 @@ button.ws-doc-thumb.is-file {
         display: none;
     }
 
+    .ws-standings-main .standings-table .ws-team-cell,
+    .ws-standings-main .standings-table .ws-team-mark,
+    .ws-standings-main .standings-table .ws-team-copy,
+    .ws-standings-main .standings-table .ws-team-title {
+        display: block;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .ws-standings-main .standings-table .ws-team-mark {
+        display: flex;
+        align-items: center;
+        gap: .35rem;
+        width: 100%;
+    }
+
     .ws-standings-main .standings-table .ws-team-shield {
-        width: 28px;
-        height: 28px;
+        width: 26px;
+        height: 26px;
+        flex: 0 0 auto;
+    }
+
+    .ws-standings-main .standings-table .ws-team-copy {
+        flex: 1;
     }
 
     .ws-standings-main .standings-table .ws-team-copy strong {
-        overflow: hidden;
         display: -webkit-box;
+        overflow: hidden;
         -webkit-box-orient: vertical;
         -webkit-line-clamp: 2;
         white-space: normal;
-        text-overflow: ellipsis;
-        font-size: .74rem;
-        line-height: 1.2;
+        text-overflow: unset;
+        word-break: break-word;
+        font-size: .68rem;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: 0;
     }
 
     .ws-standings-main .standings-table .st-col,
