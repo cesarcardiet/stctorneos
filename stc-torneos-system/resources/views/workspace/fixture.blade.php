@@ -153,7 +153,7 @@
                     @endforeach
                 </section>
             @empty
-                <p class="ws-muted">No hay partidos con esos filtros. Generá el fixture o programá un cruce.</p>
+                <p class="ws-muted">{{ ! empty($canScheduleMatches) ? 'No hay partidos con esos filtros. Generá el fixture o programá un cruce.' : 'Todavía no hay partidos en esta categoría.' }}</p>
             @endforelse
         </div>
 

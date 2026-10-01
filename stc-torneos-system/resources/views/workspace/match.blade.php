@@ -81,6 +81,8 @@
             @endif
             @if ($canOperateMatch && ! ($sheet?->locked))
                 <button type="button" class="ws-btn" data-ws-open="lineup">Alineación</button>
+            @elseif (auth()->user()?->restrictsToAssignedClub())
+                <button type="button" class="ws-btn" data-ws-open="lineup">Formación</button>
             @endif
             @include('workspace.partials.delete-match-form', ['match' => $match, 'buttonClass' => 'ws-btn danger'])
         </article>
@@ -244,7 +246,9 @@
         </article>
     </section>
 
-    @if ($canOperateMatch && ! ($sheet?->locked))
-        @include('workspace.partials.lineup-modal')
+    @if (($canOperateMatch && ! ($sheet?->locked)) || auth()->user()?->restrictsToAssignedClub())
+        @include('workspace.partials.lineup-modal', [
+            'canEditLineup' => $canOperateMatch && ! ($sheet?->locked),
+        ])
     @endif
 </x-layouts.workspace>

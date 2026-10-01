@@ -1262,10 +1262,10 @@ class WorkspaceOperationTest extends TestCase
         $this->actingAs($delegate)
             ->get(route('workspace.categories.fixture', $foreignCategory))
             ->assertOk()
-            ->assertSee('Fixture publicado')
-            ->assertSee('ws-fixture-poster', false)
+            ->assertSee('Agenda de partidos')
+            ->assertSee('Fixture')
             ->assertDontSee('Generar partidos', false)
-            ->assertDontSee('Agenda de partidos', false);
+            ->assertDontSee('Fixture publicado', false);
 
         $this->actingAs($delegate)
             ->get(route('workspace.tournaments.clubs', $category->tournament))

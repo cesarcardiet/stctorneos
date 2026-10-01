@@ -4,6 +4,14 @@
     $inCategory = isset($category) && $category;
     $navTournament = $tournament ?? $category?->tournament;
     $navLevel = $inCategory ? 'category' : ($navTournament ? 'tournament' : 'gate');
+    $delegateFixtureTeams = $navUser?->restrictsToAssignedClub()
+        ? $navUser->delegateTeams()->filter(fn ($team) => $team->category)->unique('category_id')->values()
+        : collect();
+    if ($navTournament) {
+        $delegateFixtureTeams = $delegateFixtureTeams
+            ->filter(fn ($team) => (int) $team->category->tournament_id === (int) $navTournament->id)
+            ->values();
+    }
 @endphp
 
 <aside class="stc-sidebar" id="stc-sidebar">
@@ -34,6 +42,11 @@
             <a href="{{ route('workspace.home') }}" @class(['active' => ($active ?? '') === 'Torneos'])>
                 <span><strong>Torneos</strong><small>Elegí uno</small></span><b>›</b>
             </a>
+            @foreach ($delegateFixtureTeams as $fixtureTeam)
+                <a href="{{ route('workspace.categories.fixture', $fixtureTeam->category) }}" @class(['active' => ($active ?? '') === 'Fixture'])>
+                    <span><strong>Fixture</strong><small>{{ $fixtureTeam->category->name }}</small></span><b>›</b>
+                </a>
+            @endforeach
         @elseif ($navLevel === 'tournament')
             <a href="{{ route('workspace.home') }}">
                 <span><strong>← Torneos</strong><small>Volver al listado</small></span><b>‹</b>
@@ -48,6 +61,11 @@
             <a href="{{ route('workspace.tournaments.clubs', $navTournament) }}" @class(['active' => ($active ?? '') === 'Delegaciones'])>
                 <span><strong>Delegaciones</strong><small>Clubes</small></span><b>›</b>
             </a>
+            @foreach ($delegateFixtureTeams as $fixtureTeam)
+                <a href="{{ route('workspace.categories.fixture', $fixtureTeam->category) }}" @class(['active' => ($active ?? '') === 'Fixture' && (int) ($category->id ?? 0) === (int) $fixtureTeam->category_id])>
+                    <span><strong>Fixture</strong><small>{{ $fixtureTeam->category->name }}</small></span><b>›</b>
+                </a>
+            @endforeach
         @else
             <a href="{{ route('workspace.home') }}">
                 <span><strong>Torneos</strong><small>Listado</small></span><b>›</b>

@@ -1,5 +1,6 @@
 @php
     $onField = $category->startersLimit();
+    $canEditLineup = $canEditLineup ?? true;
     $saved = $match->lineups->keyBy('player_id');
     $starterSlots = ['home' => 0, 'away' => 0];
     $sides = [
@@ -11,7 +12,13 @@
 <x-ws-modal id="lineup" title="Alineación" class="is-lineup" data-ws-auto-open="{{ $errors->has('lineup') ? '1' : '0' }}">
     <form method="post" action="{{ route('workspace.categories.matches.lineup', [$category, $match]) }}" data-ws-lineup data-on-field="{{ $onField }}">
         @csrf
-        <p class="ws-lineup-note">En cancha van <b>{{ $onField }}</b> titulares, según la modalidad. Si hay más jugadores, el resto queda como <b>suplente</b> y no se pueden marcar más titulares.</p>
+        <p class="ws-lineup-note">
+            @if ($canEditLineup)
+                En cancha van <b>{{ $onField }}</b> titulares, según la modalidad. Si hay más jugadores, el resto queda como <b>suplente</b> y no se pueden marcar más titulares.
+            @else
+                Formación del partido. En cancha van <b>{{ $onField }}</b> titulares. Desde el delegado solo se consulta.
+            @endif
+        </p>
         @error('lineup')
             <p class="ws-lineup-alert">{{ $message }}</p>
         @enderror
@@ -48,15 +55,15 @@
                             data-sort="{{ $row?->sort_order ?? 999 }}"
                         >
                             <label class="ws-lineup-check">
-                                <input type="checkbox" data-called @checked($starter)>
+                                <input type="checkbox" data-called @checked($starter) @disabled(! $canEditLineup)>
                                 <span>{{ $player->fullName() }}</span>
                             </label>
                             <input type="hidden" name="called[]" value="{{ $player->id }}">
                             <label class="ws-lineup-shirt">
                                 <span>Nº de camiseta</span>
-                                <input type="number" name="shirts[{{ $player->id }}]" min="0" max="99" inputmode="numeric" value="{{ $shirt }}" data-shirt>
+                                <input type="number" name="shirts[{{ $player->id }}]" min="0" max="99" inputmode="numeric" value="{{ $shirt }}" data-shirt @readonly(! $canEditLineup)>
                             </label>
-                            <button type="button" class="ws-lineup-role {{ $starter ? 'is-starter' : 'is-sub' }}" data-role-toggle>
+                            <button type="button" class="ws-lineup-role {{ $starter ? 'is-starter' : 'is-sub' }}" data-role-toggle @disabled(! $canEditLineup)>
                                 {{ $starter ? 'Titular' : 'Suplente' }}
                             </button>
                             <input type="hidden" name="roles[{{ $player->id }}]" value="{{ $starter ? 'starter' : 'sub' }}" data-role>
@@ -89,7 +96,9 @@
         <footer class="ws-lineup-foot">
             <button type="button" class="ws-lineup-link" data-lineup-graphic-open>Vista gráfica</button>
             <button type="button" class="ws-lineup-link is-muted" data-lineup-graphic-back hidden>Quitar</button>
-            <button type="submit" class="ws-lineup-save">Guardar</button>
+            @if ($canEditLineup)
+                <button type="submit" class="ws-lineup-save">Guardar</button>
+            @endif
         </footer>
     </form>
 </x-ws-modal>

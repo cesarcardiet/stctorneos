@@ -227,13 +227,6 @@ class CategoryController extends Controller
     public function fixture(Request $request, Category $category): View
     {
         $category = $this->assertCategory($category);
-
-        if ($request->user()->restrictsToAssignedClub()) {
-            return view('workspace.fixture-public', $this->page($category, 'Fixture', [
-                'fixtureImageUrl' => $this->fixtureImageUrl($category),
-            ]));
-        }
-
         $category->load(['teams.delegation']);
 
         $matches = FixtureMatch::query()
@@ -610,7 +603,7 @@ class CategoryController extends Controller
             'lineups',
         ]);
 
-        return view('workspace.match', $this->page($category, 'Clasificación', [
+        return view('workspace.match', $this->page($category, 'Fixture', [
             'match' => $match,
             'sheet' => $match->sheet,
             'fields' => $this->tournamentFields($category),
