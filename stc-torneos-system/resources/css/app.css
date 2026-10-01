@@ -16791,11 +16791,11 @@ button.ws-doc-thumb.is-file {
 .lv-panel {
     margin: 0 0 1rem;
     padding: 1rem 1rem .9rem;
-    border: 1px solid rgba(180, 200, 220, .7);
-    border-radius: 22px;
-    background: #f3f6fb;
-    color: #122033;
-    box-shadow: 0 16px 40px rgba(0, 0, 0, .18);
+    border: 1px solid var(--stc-border);
+    border-radius: 20px;
+    background: var(--stc-panel);
+    color: var(--stc-text);
+    box-shadow: 0 0 26px rgba(0, 107, 255, .18);
 }
 
 .lv-panel button {
@@ -16804,7 +16804,7 @@ button.ws-doc-thumb.is-file {
 
 .lv-panel .ws-plays-title {
     margin: .85rem 0 .4rem;
-    color: #122033;
+    color: var(--stc-text);
 }
 
 .lv-top {
@@ -16826,9 +16826,10 @@ button.ws-doc-thumb.is-file {
     align-items: center;
     gap: .35rem;
     padding: .28rem .7rem;
+    border: 1px solid rgba(0, 213, 255, .4);
     border-radius: 999px;
-    background: #1d4ed8;
-    color: #fff;
+    background: rgba(0, 107, 255, .28);
+    color: var(--stc-text);
     font-size: .72rem;
     font-weight: 800;
 }
@@ -16837,21 +16838,38 @@ button.ws-doc-thumb.is-file {
     width: .45rem;
     height: .45rem;
     border-radius: 50%;
-    background: #7dd3fc;
+    background: var(--stc-cyan);
+}
+
+.lv-chip.is-live {
+    color: #041018;
+    background: linear-gradient(135deg, #00ff9c, #00d5ff);
+    border-color: transparent;
+}
+
+.lv-chip.is-live i {
+    background: #041018;
 }
 
 .lv-chip.is-warn {
-    background: #b45309;
+    color: #041018;
+    background: var(--stc-yellow);
+    border-color: transparent;
+}
+
+.lv-chip.is-warn i {
+    background: #041018;
 }
 
 .lv-chip.is-soon,
 .lv-chip.is-done {
-    background: #334155;
+    background: rgba(130, 144, 167, .2);
+    border-color: rgba(130, 144, 167, .35);
 }
 
 .lv-meta {
     margin: .45rem 0 .8rem;
-    color: #5c6b80;
+    color: var(--stc-muted);
     font-size: .78rem;
     font-weight: 700;
     text-align: center;
@@ -16864,9 +16882,9 @@ button.ws-doc-thumb.is-file {
     align-items: center;
     margin-bottom: .85rem;
     padding: .85rem .7rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--stc-border);
     border-radius: 18px;
-    background: #fff;
+    background: rgba(2, 10, 24, .55);
     text-align: center;
 }
 
@@ -16886,7 +16904,7 @@ button.ws-doc-thumb.is-file {
 }
 
 .lv-score > b {
-    color: #16325c;
+    color: var(--stc-cyan);
     font-size: 1.8rem;
     font-weight: 800;
     letter-spacing: .04em;
@@ -16904,36 +16922,35 @@ button.ws-doc-thumb.is-file {
     gap: .25rem;
     min-height: 92px;
     padding: .7rem .35rem;
-    border: 1px solid #e6edf5;
+    border: 1px solid var(--stc-border);
     border-radius: 16px;
-    background: #fff;
-    color: #16325c;
+    background: rgba(0, 107, 255, .1);
+    color: var(--stc-text);
     font-size: .68rem;
     font-weight: 800;
     letter-spacing: .03em;
     text-transform: uppercase;
     cursor: pointer;
-    box-shadow: 0 8px 18px rgba(16, 32, 51, .05);
 }
 
 .lv-actions button svg {
     width: 28px;
     height: 28px;
-    color: #1d4ed8;
+    color: var(--stc-cyan);
 }
 
 .lv-actions button:hover {
     transform: none;
-    border-color: #93c5fd;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, .15);
+    border-color: var(--stc-cyan);
+    box-shadow: 0 0 18px rgba(0, 213, 255, .22);
 }
 
 .lv-picker {
     margin-top: .75rem;
     padding: .8rem;
     border-radius: 16px;
-    background: #fff;
-    border: 1px solid #dbe4ef;
+    background: rgba(2, 10, 24, .72);
+    border: 1px solid var(--stc-border);
 }
 
 .lv-picker header {
@@ -16952,10 +16969,10 @@ button.ws-doc-thumb.is-file {
 .lv-skip,
 .lv-picker-tools button,
 .lv-incidents button {
-    border: 1px solid #d5deea;
+    border: 1px solid var(--stc-border);
     border-radius: 999px;
-    background: #f8fafc;
-    color: #16325c;
+    background: rgba(0, 107, 255, .16);
+    color: var(--stc-text);
     font-size: .72rem;
     font-weight: 800;
     cursor: pointer;
@@ -16967,7 +16984,7 @@ button.ws-doc-thumb.is-file {
 
 .lv-picker p {
     margin: .35rem 0 .6rem;
-    color: #5c6b80;
+    color: var(--stc-muted);
     font-size: .75rem;
 }
 
@@ -16984,9 +17001,9 @@ button.ws-doc-thumb.is-file {
 
 .lv-picker-tools button.is-on,
 .lv-incident-teams button.is-on {
-    background: #1d4ed8;
-    color: #fff;
-    border-color: #1d4ed8;
+    background: linear-gradient(135deg, var(--stc-blue), var(--stc-cyan));
+    color: #041018;
+    border-color: transparent;
 }
 
 .lv-sides {
@@ -17008,7 +17025,7 @@ button.ws-doc-thumb.is-file {
     font-weight: 800;
     letter-spacing: .03em;
     text-transform: uppercase;
-    color: #5c6b80;
+    color: var(--stc-muted);
 }
 
 .lv-sides button {
@@ -17017,10 +17034,10 @@ button.ws-doc-thumb.is-file {
     gap: .4rem;
     width: 100%;
     padding: .45rem .5rem;
-    border: 1px solid #e6edf5;
+    border: 1px solid var(--stc-border);
     border-radius: 12px;
-    background: #f8fafc;
-    color: #122033;
+    background: rgba(0, 107, 255, .1);
+    color: var(--stc-text);
     font-size: .75rem;
     font-weight: 700;
     text-align: left;
@@ -17029,13 +17046,13 @@ button.ws-doc-thumb.is-file {
 
 .lv-sides button b {
     min-width: 1.4rem;
-    color: #1d4ed8;
+    color: var(--stc-cyan);
     font-size: .78rem;
 }
 
 .lv-sides button small,
 .lv-sides p {
-    color: #7b8798;
+    color: var(--stc-muted);
     font-size: .65rem;
     font-weight: 700;
 }
@@ -17066,9 +17083,9 @@ button.ws-doc-thumb.is-file {
     list-style: none;
     margin: .8rem 0 .7rem;
     padding: 0;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--stc-border);
     border-radius: 16px;
-    background: #fff;
+    background: rgba(2, 10, 24, .55);
     overflow: hidden;
 }
 
@@ -17078,7 +17095,7 @@ button.ws-doc-thumb.is-file {
     gap: .45rem;
     align-items: center;
     padding: .55rem .75rem;
-    border-top: 1px solid #eef2f7;
+    border-top: 1px solid rgba(0, 213, 255, .12);
     font-size: .78rem;
 }
 
@@ -17087,7 +17104,7 @@ button.ws-doc-thumb.is-file {
 }
 
 .lv-events b {
-    color: #5c6b80;
+    color: var(--stc-muted);
     font-weight: 800;
 }
 
@@ -17098,11 +17115,11 @@ button.ws-doc-thumb.is-file {
     text-transform: uppercase;
 }
 
-.lv-events span.is-goal { color: #1d4ed8; }
-.lv-events span.is-assist { color: #0369a1; }
-.lv-events span.is-yellow { color: #a16207; }
-.lv-events span.is-red { color: #dc2626; }
-.lv-events span.is-substitution { color: #0f766e; }
+.lv-events span.is-goal { color: var(--stc-cyan); }
+.lv-events span.is-assist { color: #8fd4ff; }
+.lv-events span.is-yellow { color: var(--stc-yellow); }
+.lv-events span.is-red { color: var(--stc-red); }
+.lv-events span.is-substitution { color: var(--stc-green); }
 
 .lv-events em {
     font-style: normal;
@@ -17111,7 +17128,7 @@ button.ws-doc-thumb.is-file {
 
 .lv-empty {
     display: block !important;
-    color: #7b8798;
+    color: var(--stc-muted);
     font-size: .75rem !important;
 }
 
@@ -17139,22 +17156,22 @@ button.ws-doc-thumb.is-file {
 }
 
 .lv-pause {
-    border: 1px solid #d5deea;
-    background: #fff;
-    color: #16325c;
+    border: 1px solid var(--stc-border);
+    background: rgba(0, 107, 255, .16);
+    color: var(--stc-text);
 }
 
 .lv-finish {
     border: 0;
-    background: #e11d2e;
+    background: linear-gradient(135deg, #c81e2e, var(--stc-red));
     color: #fff;
 }
 
 .lv-undo {
     margin-top: .45rem;
-    border: 1px solid #d5deea;
+    border: 1px solid var(--stc-border);
     background: transparent;
-    color: #5c6b80;
+    color: var(--stc-muted);
 }
 
 .lv-pause:hover,
