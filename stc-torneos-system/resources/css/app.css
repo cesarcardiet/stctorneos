@@ -15327,17 +15327,30 @@ button.ws-doc-thumb.is-file {
 
     .ws-standings-main .standings-table .table-head,
     .ws-standings-main .standings-table .table-row {
-        grid-template-columns: 22px 124px repeat(var(--st-cols, 10), 40px);
+        grid-template-columns: 22px 124px repeat(var(--st-mobile-cols, 6), 40px);
+        align-items: stretch;
         width: max-content;
         min-width: 0;
         gap: 0;
         padding: .45rem 0;
     }
 
+    .ws-standings-main .standings-table .st-col:not(.st-col-pts):not(.st-col-j):not(.st-col-g):not(.st-col-e):not(.st-col-p):not(.st-col-gf) {
+        display: none;
+    }
+
+    .ws-standings-main .standings-table .st-col {
+        position: relative;
+        z-index: 1;
+    }
+
     .ws-standings-main .standings-table .st-position,
     .ws-standings-main .standings-table .st-team {
         position: sticky;
-        z-index: 3;
+        z-index: 4;
+        align-self: stretch;
+        display: flex;
+        align-items: center;
         background: #071426;
     }
 
@@ -15347,18 +15360,30 @@ button.ws-doc-thumb.is-file {
 
     .ws-standings-main .standings-table .st-team {
         left: 22px;
-        box-shadow: 10px 0 12px rgba(0, 0, 0, .28);
+        padding-right: .45rem;
+        border-right: 1px solid rgba(0, 213, 255, .28);
+        box-shadow: 8px 0 0 #071426;
     }
 
     .ws-standings-main .standings-table .table-row:nth-child(odd) .st-position,
     .ws-standings-main .standings-table .table-row:nth-child(odd) .st-team {
         background: #0a1c34;
+        box-shadow: 8px 0 0 #0a1c34;
+    }
+
+    .ws-standings-main .standings-table .table-row:nth-child(odd) .st-position {
+        box-shadow: none;
     }
 
     .ws-standings-main .standings-table .table-head .st-position,
     .ws-standings-main .standings-table .table-head .st-team {
-        z-index: 4;
+        z-index: 5;
         background: #020917;
+        box-shadow: 8px 0 0 #020917;
+    }
+
+    .ws-standings-main .standings-table .table-head .st-position {
+        box-shadow: none;
     }
 
     .ws-standings-main .standings-table .table-row .st-position b {
