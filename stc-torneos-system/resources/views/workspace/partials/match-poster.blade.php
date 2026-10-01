@@ -50,8 +50,8 @@
             $y = $row->pos_y ?? $slot[1];
             $points[] = [(int) $x, (int) $y];
             $placed[] = [
-                'x' => (int) $x,
-                'y' => (int) $y,
+                'x' => 100 - (int) $y,
+                'y' => (int) $x,
                 'number' => $row->shirt_number ?: ($row->player?->jersey_number ?: '·'),
                 'name' => mb_strtoupper((string) ($row->player?->last_name ?: $row->player?->first_name ?: ''), 'UTF-8'),
                 'photo' => $row->player?->photoUrl(),
@@ -125,14 +125,14 @@
                     @endif
                 </header>
                 <div class="mf-pitch">
-                    <svg viewBox="0 0 68 105" preserveAspectRatio="none" aria-hidden="true">
-                        <rect x="2" y="2" width="64" height="101" fill="none" stroke="#fff" stroke-width="0.7"/>
-                        <line x1="2" y1="52.5" x2="66" y2="52.5" stroke="#fff" stroke-width="0.6"/>
-                        <circle cx="34" cy="52.5" r="8" fill="none" stroke="#fff" stroke-width="0.6"/>
-                        <rect x="14" y="2" width="40" height="16" fill="none" stroke="#fff" stroke-width="0.6"/>
-                        <rect x="22" y="2" width="24" height="7" fill="none" stroke="#fff" stroke-width="0.6"/>
-                        <rect x="14" y="87" width="40" height="16" fill="none" stroke="#fff" stroke-width="0.6"/>
-                        <rect x="22" y="96" width="24" height="7" fill="none" stroke="#fff" stroke-width="0.6"/>
+                    <svg viewBox="0 0 105 68" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                        <rect x="2" y="2" width="101" height="64" fill="none" stroke="#fff" stroke-width="0.7"/>
+                        <line x1="52.5" y1="2" x2="52.5" y2="66" stroke="#fff" stroke-width="0.6"/>
+                        <circle cx="52.5" cy="34" r="8" fill="none" stroke="#fff" stroke-width="0.6"/>
+                        <rect x="2" y="14" width="16" height="40" fill="none" stroke="#fff" stroke-width="0.6"/>
+                        <rect x="2" y="22" width="7" height="24" fill="none" stroke="#fff" stroke-width="0.6"/>
+                        <rect x="87" y="14" width="16" height="40" fill="none" stroke="#fff" stroke-width="0.6"/>
+                        <rect x="96" y="22" width="7" height="24" fill="none" stroke="#fff" stroke-width="0.6"/>
                     </svg>
                     @forelse ($side['placed'] as $token)
                         <span class="mf-token" style="left: {{ $token['x'] }}%; top: {{ $token['y'] }}%;">

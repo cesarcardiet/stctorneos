@@ -90,9 +90,11 @@
             <a href="{{ route('workspace.categories.fixture', $category) }}" @class(['active' => ($active ?? '') === 'Fixture'])>
                 <span><strong>Fixture</strong><small>Partidos</small></span><b>›</b>
             </a>
-            <a href="{{ route('workspace.categories.settings', $category) }}" @class(['active' => in_array(($active ?? ''), ['Configuración', 'Media', 'Rankings'], true)])>
-                <span><strong>Configuración</strong><small>Ajustes</small></span><b>›</b>
-            </a>
+            @unless ($navUser?->restrictsToAssignedClub())
+                <a href="{{ route('workspace.categories.settings', $category) }}" @class(['active' => in_array(($active ?? ''), ['Configuración', 'Media', 'Rankings'], true)])>
+                    <span><strong>Configuración</strong><small>Ajustes</small></span><b>›</b>
+                </a>
+            @endunless
         @endif
     </nav>
     <a class="stc-logout" href="{{ route('logout.demo') }}">Salir</a>
