@@ -16285,8 +16285,9 @@ button.ws-doc-thumb.is-file {
 }
 
 .mf-poster {
-    max-width: 560px;
-    margin: 0 auto 1rem;
+    width: 100%;
+    max-width: none;
+    margin: 0 0 1rem;
     padding: .85rem .75rem .7rem;
     border: 1px solid rgba(120, 190, 255, .28);
     border-radius: 16px;
@@ -16438,7 +16439,8 @@ button.ws-doc-thumb.is-file {
 
 .mf-pitch {
     position: relative;
-    aspect-ratio: 68 / 92;
+    width: 100%;
+    height: 340px;
     border-radius: 8px;
     overflow: hidden;
     background:
@@ -16456,21 +16458,32 @@ button.ws-doc-thumb.is-file {
 .mf-token {
     position: absolute;
     transform: translate(-50%, -50%);
-    width: 52px;
+    width: 58px;
     text-align: center;
 }
 
+.mf-token img {
+    width: 34px;
+    height: 34px;
+    margin: 0 auto;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0b1c33;
+}
+
 .mf-token b {
+    position: absolute;
+    top: 20px;
+    right: 8px;
     display: grid;
     place-items: center;
-    width: 18px;
-    height: 18px;
-    margin: 0 auto;
-    border: 1px solid #fff;
+    width: 16px;
+    height: 16px;
     border-radius: 50%;
-    background: rgba(8, 20, 40, .78);
+    background: #071426;
     color: #fff;
-    font-size: .62rem;
+    font-size: .58rem;
     font-weight: 800;
 }
 
@@ -16536,11 +16549,19 @@ button.ws-doc-thumb.is-file {
 .mf-subs li {
     display: flex;
     gap: .35rem;
-    align-items: baseline;
+    align-items: center;
     color: var(--stc-text);
     font-size: .62rem;
     font-weight: 700;
     line-height: 1.35;
+}
+
+.mf-subs img {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #0b1c33;
 }
 
 .mf-subs b {
@@ -16664,6 +16685,10 @@ button.ws-doc-thumb.is-file {
     .mf-lower,
     .mf-score {
         grid-template-columns: 1fr;
+    }
+
+    .mf-pitch {
+        height: 280px;
     }
 
     .mf-club img {

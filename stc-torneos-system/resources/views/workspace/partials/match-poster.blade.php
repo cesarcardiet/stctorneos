@@ -54,6 +54,7 @@
                 'y' => (int) $y,
                 'number' => $row->shirt_number ?: ($row->player?->jersey_number ?: '·'),
                 'name' => mb_strtoupper((string) ($row->player?->last_name ?: $row->player?->first_name ?: ''), 'UTF-8'),
+                'photo' => $row->player?->photoUrl(),
             ];
         }
 
@@ -135,6 +136,7 @@
                     </svg>
                     @forelse ($side['placed'] as $token)
                         <span class="mf-token" style="left: {{ $token['x'] }}%; top: {{ $token['y'] }}%;">
+                            <img src="{{ $token['photo'] }}" alt="">
                             <b>{{ $token['number'] }}</b>
                             <small>{{ $token['name'] }}</small>
                         </span>
@@ -154,6 +156,7 @@
                     <ul>
                         @forelse ($side['subs'] as $row)
                             <li>
+                                <img src="{{ $row->player?->photoUrl() }}" alt="">
                                 <b>{{ $row->shirt_number ?: ($row->player?->jersey_number ?: '—') }}</b>
                                 <span>{{ mb_strtoupper($row->player?->last_name ?: $row->player?->fullName() ?: '', 'UTF-8') }}</span>
                             </li>
