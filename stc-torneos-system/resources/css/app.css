@@ -15325,18 +15325,38 @@ button.ws-doc-thumb.is-file {
         min-width: 100%;
     }
 
-    .ws-standings-main .standings-table .table-head {
-        background: transparent;
+    .ws-standings-main .standings-table .table-head,
+    .ws-standings-main .standings-table .table-row:nth-child(even) {
+        background: #0b1e3a;
+    }
+
+    .ws-standings-main .standings-table .table-row:nth-child(odd) {
+        background: #0e2748;
+    }
+
+    .ws-standings-main .standings-table .table-row:hover {
+        background: #0b1e3a;
+    }
+
+    .ws-standings-main .standings-table .table-row:nth-child(odd):hover {
+        background: #0e2748;
     }
 
     .ws-standings-main .standings-table .table-head,
     .ws-standings-main .standings-table .table-row {
         grid-template-columns: 36px 132px repeat(var(--st-cols, 10), 44px);
-        align-items: center;
+        align-items: stretch;
         width: max-content;
         min-width: max-content;
         gap: 0 .45rem;
-        padding: .55rem .65rem;
+        padding: 0 .65rem 0 0;
+    }
+
+    .ws-standings-main .standings-table .st-position,
+    .ws-standings-main .standings-table .st-team,
+    .ws-standings-main .standings-table .st-col {
+        padding-top: .55rem;
+        padding-bottom: .55rem;
     }
 
     .ws-standings-main .standings-table .st-position,
@@ -15345,29 +15365,70 @@ button.ws-doc-thumb.is-file {
         z-index: 2;
         display: flex;
         align-items: center;
-        background: transparent;
+        align-self: stretch;
         box-shadow: none;
+    }
+
+    .ws-standings-main .standings-table .table-row:nth-child(even) .st-position,
+    .ws-standings-main .standings-table .table-row:nth-child(even) .st-team,
+    .ws-standings-main .standings-table .table-head .st-position,
+    .ws-standings-main .standings-table .table-head .st-team {
+        background: #0b1e3a;
+    }
+
+    .ws-standings-main .standings-table .table-row:nth-child(odd) .st-position,
+    .ws-standings-main .standings-table .table-row:nth-child(odd) .st-team {
+        background: #0e2748;
     }
 
     .ws-standings-main .standings-table .st-position {
         left: 0;
         justify-content: center;
+        padding-left: .65rem;
     }
 
     .ws-standings-main .standings-table .st-team {
         left: calc(36px + .45rem);
         justify-content: flex-start;
         border: 0;
-        padding: 0;
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    .ws-standings-main .standings-table .st-team::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 100%;
+        width: .45rem;
+        background: inherit;
+    }
+
+    .ws-standings-main .standings-table .st-team::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 100%;
+        width: 1.15rem;
+        pointer-events: none;
+        background: linear-gradient(90deg, #0b1e3a 25%, rgba(11, 30, 58, 0));
+    }
+
+    .ws-standings-main .standings-table .table-row:nth-child(odd) .st-team::after {
+        background: linear-gradient(90deg, #0e2748 25%, rgba(14, 39, 72, 0));
     }
 
     .ws-standings-main .standings-table .table-head .st-position,
     .ws-standings-main .standings-table .table-head .st-team {
         z-index: 3;
-        overflow: hidden;
-        background: transparent;
         box-shadow: none;
         white-space: nowrap;
+    }
+
+    .ws-standings-main .standings-table .table-head .st-position {
+        overflow: hidden;
     }
 
     .ws-standings-main .standings-table .table-row .st-position b {
