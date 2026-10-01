@@ -291,6 +291,7 @@ Route::middleware(['auth', 'permission:dashboard.view'])->prefix('operacion')->n
     Route::post('/categorias/{category}/partidos/{match}/alineacion', [WorkspaceActionController::class, 'storeMatchLineup'])->name('categories.matches.lineup');
     Route::post('/categorias/{category}/partidos/{match}/eventos', [WorkspaceActionController::class, 'addSheetEvent'])->name('categories.matches.events');
     Route::delete('/categorias/{category}/partidos/{match}/eventos/{event}', [WorkspaceActionController::class, 'destroySheetEvent'])->name('categories.matches.events.destroy');
+    Route::patch('/categorias/{category}/partidos/{match}/eventos/{event}', [WorkspaceActionController::class, 'updateSheetEvent'])->name('categories.matches.events.update');
     Route::post('/categorias/{category}/partidos/{match}/incidencias', [WorkspaceActionController::class, 'addSheetIncident'])->name('categories.matches.incidents');
     Route::delete('/categorias/{category}/partidos/{match}/incidencias/{incident}', [WorkspaceActionController::class, 'destroySheetIncident'])->name('categories.matches.incidents.destroy');
     Route::post('/categorias/{category}/partidos/{match}/cerrar', [WorkspaceActionController::class, 'closeSheet'])->name('categories.matches.close');

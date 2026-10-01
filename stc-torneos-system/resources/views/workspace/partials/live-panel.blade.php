@@ -1,7 +1,6 @@
 @php
     $homeScore = $sheet?->home_score ?? $match->home_score ?? 0;
     $awayScore = $sheet?->away_score ?? $match->away_score ?? 0;
-    $lastEvent = $sheet?->events?->sortByDesc('id')->first();
     $liveSides = collect([$match->homeTeam, $match->awayTeam])->filter()->map(function ($team) use ($match) {
         $rows = $match->lineups->where('team_id', $team->id)->sortBy(
             fn ($row) => sprintf('%d-%04d', $row->starter ? 0 : 1, (int) $row->sort_order)
@@ -163,7 +162,7 @@
                 <button type="button" data-live-incident="{{ $value }}">{{ $label }}</button>
             @endforeach
         </div>
-        <button type="button" class="lv-skip" data-live-skip hidden>Sin asistencia</button>
+        <button type="button" class="lv-skip" data-live-skip hidden>Descartar asistencia</button>
     </div>
 
     <h3 class="ws-plays-title">Eventos del partido</h3>
@@ -173,6 +172,23 @@
                 <b>{{ $event->minuteLabel() }}</b>
                 <span class="is-{{ $event->tone() }}">{{ $event->typeLabel() }}</span>
                 <em>{{ $event->actorName() }}</em>
+                <div class="lv-event-tools">
+                    @if ($event->player_id)
+                        <button
+                            type="button"
+                            class="lv-fix"
+                            data-live-edit
+                            data-team-id="{{ $event->team_id }}"
+                            data-player-id="{{ $event->player_id }}"
+                            data-update-url="{{ route('workspace.categories.matches.events.update', [$category, $match, $event]) }}"
+                        >Cambiar</button>
+                    @endif
+                    <form method="post" action="{{ route('workspace.categories.matches.events.destroy', [$category, $match, $event]) }}">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="lv-fix is-drop">Descartar</button>
+                    </form>
+                </div>
             </li>
         @empty
             <li class="lv-empty">Todavía no hay jugadas. Tocá Gol, asistencia o una tarjeta.</li>
@@ -208,14 +224,6 @@
         </form>
     </div>
 
-    @if ($lastEvent)
-        <form method="post" action="{{ route('workspace.categories.matches.events.destroy', [$category, $match, $lastEvent]) }}">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="lv-undo">Corregir acción · {{ $lastEvent->typeLabel() }} {{ $lastEvent->actorName() }}</button>
-        </form>
-    @endif
-
     <form method="post" action="{{ route('workspace.categories.matches.events', [$category, $match]) }}" data-live-event-form hidden>
         @csrf
         <input type="hidden" name="type" data-live-type>
@@ -225,6 +233,12 @@
         <input type="hidden" name="team_staff_id" data-live-staff-input>
         <input type="hidden" name="assist_player_id" data-live-assist>
         <input type="hidden" name="minute" value="0" data-live-minute>
+    </form>
+
+    <form method="post" action="{{ route('workspace.categories.matches.events', [$category, $match]) }}" data-live-edit-form hidden>
+        @csrf
+        @method('PATCH')
+        <input type="hidden" name="player_id" data-live-edit-player>
     </form>
 
     <form method="post" action="{{ route('workspace.categories.matches.incidents', [$category, $match]) }}" data-live-incident-form hidden>

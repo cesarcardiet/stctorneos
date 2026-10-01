@@ -17091,7 +17091,7 @@ button.ws-doc-thumb.is-file {
 
 .lv-events li {
     display: grid;
-    grid-template-columns: 2.4rem auto minmax(0, 1fr);
+    grid-template-columns: 2.4rem auto minmax(0, 1fr) auto;
     gap: .45rem;
     align-items: center;
     padding: .55rem .75rem;
@@ -17124,6 +17124,37 @@ button.ws-doc-thumb.is-file {
 .lv-events em {
     font-style: normal;
     font-weight: 700;
+}
+
+.lv-event-tools {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .3rem;
+}
+
+.lv-event-tools form {
+    margin: 0;
+}
+
+.lv-fix {
+    padding: .28rem .55rem;
+    border: 1px solid var(--stc-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--stc-cyan);
+    font-size: .62rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.lv-fix.is-drop {
+    color: var(--stc-red);
+}
+
+.lv-fix:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 .lv-empty {

@@ -1751,6 +1751,7 @@ function initLivePanel() {
     const staffToggle = root.querySelector('[data-live-staff-toggle]');
     const skip = root.querySelector('[data-live-skip]');
     const eventForm = root.querySelector('[data-live-event-form]');
+    const editForm = root.querySelector('[data-live-edit-form]');
     const incidentForm = root.querySelector('[data-live-incident-form]');
     const labels = {
         goal: '¿Quién hizo el gol?',
@@ -1762,6 +1763,7 @@ function initLivePanel() {
     };
     let mode = null;
     let scorer = null;
+    let editingUrl = '';
 
     const showPlayers = (teamId) => {
         sides.hidden = false;
@@ -1788,7 +1790,7 @@ function initLivePanel() {
         mode = type;
         scorer = null;
         title.textContent = labels[type] || 'Elegí';
-        hint.textContent = type === 'goal' ? 'Después podés marcar quién asistió.' : '';
+        hint.textContent = type === 'goal' ? 'Si la asistencia no va, descartala. El gol queda igual.' : '';
         skip.hidden = true;
         staffToggle.hidden = !['yellow', 'red'].includes(type);
         if (type === 'incident') {
@@ -1825,6 +1827,25 @@ function initLivePanel() {
     root.querySelector('[data-live-picker-close]')?.addEventListener('click', () => {
         picker.hidden = true;
         mode = null;
+        editingUrl = '';
+    });
+
+    root.querySelectorAll('[data-live-edit]').forEach((button) => {
+        button.addEventListener('click', () => {
+            mode = 'edit';
+            scorer = null;
+            editingUrl = button.dataset.updateUrl || '';
+            title.textContent = 'Cambiar jugador';
+            hint.textContent = 'Elegí al correcto. El anterior se reemplaza.';
+            skip.hidden = true;
+            staffToggle.hidden = true;
+            showPlayers(button.dataset.teamId);
+            setWho('player');
+            root.querySelectorAll('[data-live-player]').forEach((player) => {
+                player.hidden = player.dataset.playerId === button.dataset.playerId;
+            });
+            picker.hidden = false;
+        });
     });
 
     staffToggle?.querySelectorAll('button').forEach((button) => {
@@ -1836,10 +1857,20 @@ function initLivePanel() {
             if (!mode || mode === 'incident') {
                 return;
             }
+            if (mode === 'edit') {
+                editForm.action = editingUrl;
+                editForm.querySelector('[data-live-edit-player]').value = button.dataset.playerId;
+                if (editForm.requestSubmit) {
+                    editForm.requestSubmit();
+                } else {
+                    editForm.submit();
+                }
+                return;
+            }
             if (mode === 'goal' && !scorer) {
                 scorer = { playerId: button.dataset.playerId, teamId: button.dataset.teamId };
                 title.textContent = '¿Quién dio la asistencia?';
-                hint.textContent = 'Si no hubo, seguí sin asistencia.';
+                hint.textContent = 'Si te equivocaste, descartá la asistencia. El gol se guarda igual.';
                 skip.hidden = false;
                 showPlayers(scorer.teamId);
                 button.hidden = true;

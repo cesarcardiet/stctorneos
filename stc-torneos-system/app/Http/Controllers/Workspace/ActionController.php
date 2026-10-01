@@ -1577,6 +1577,30 @@ class ActionController extends Controller
         return back()->with('status', 'Jugada eliminada.');
     }
 
+    public function updateSheetEvent(Request $request, Category $category, FixtureMatch $match, MatchSheetEvent $event): RedirectResponse
+    {
+        $category = $this->assertCategory($category);
+        $this->assertMatch($category, $match);
+        abort_unless($this->canOperateMatch($request->user()), 403);
+
+        $sheet = $this->sheetFor($match);
+        abort_if($sheet->locked, 403, 'La planilla ya está cerrada.');
+        abort_unless((int) $event->match_sheet_id === (int) $sheet->id, 404);
+        abort_if($event->team_staff_id, 422, 'Esa jugada es del cuerpo técnico.');
+
+        $data = $request->validate([
+            'player_id' => ['required', 'exists:players,id'],
+        ]);
+
+        $player = Player::query()->findOrFail($data['player_id']);
+        abort_unless((int) $player->team_id === (int) $event->team_id, 422, 'Ese jugador no es de ese equipo.');
+        abort_unless((int) $player->id !== (int) $event->player_id, 422, 'Elegí otro jugador.');
+
+        $event->update(['player_id' => $player->id]);
+
+        return back()->with('status', 'Jugada corregida.');
+    }
+
     public function addSheetIncident(Request $request, Category $category, FixtureMatch $match): RedirectResponse
     {
         $category = $this->assertCategory($category);
