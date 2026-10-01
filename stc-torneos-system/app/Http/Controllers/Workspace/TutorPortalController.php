@@ -16,6 +16,8 @@ use App\Services\GuardianFichaService;
 
 use App\Services\GuardianInvitationService;
 
+use App\Services\PlayerPerformanceService;
+
 use App\Support\TutorCredentials;
 
 use App\Support\WorkspaceAccess;
@@ -118,7 +120,9 @@ class TutorPortalController extends Controller
 
             'user' => $user,
 
-            'player' => $player->fresh(['team.category', 'team.tournament', 'guardian', 'documents', 'invitations']),
+            'player' => $player->fresh(['team.category', 'team.tournament', 'team.delegation', 'guardian', 'documents', 'invitations']),
+
+            'stats' => app(PlayerPerformanceService::class)->summary($player),
 
             'invitation' => $invitation,
 

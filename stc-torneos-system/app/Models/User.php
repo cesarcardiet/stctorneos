@@ -255,6 +255,14 @@ class User extends Authenticatable
         return $this->hasRole('tutor') && ! $this->isSuperAdmin();
     }
 
+    public function canDownloadPlayerCard(): bool
+    {
+        return $this->isSuperAdmin()
+            || $this->hasRole('admin-torneo')
+            || $this->isTutorAccount()
+            || $this->isPlayerAccount();
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Collection<int, Player>
      */

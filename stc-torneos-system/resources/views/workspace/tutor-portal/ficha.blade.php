@@ -8,6 +8,16 @@
         <a href="{{ route('workspace.tutor.home') }}" class="ws-btn ghost">← Volver a Mis jugadores</a>
     </p>
 
+    <section class="ws-ficha ws-ficha-premium">
+        @include('workspace.partials.player-ficha-card', [
+            'player' => $player,
+            'category' => $player->team?->category,
+            'tournament' => $player->team?->tournament ?? $player->team?->category?->tournament,
+            'stats' => $stats ?? [],
+            'canEdit' => false,
+        ])
+    </section>
+
     <section class="ws-card ws-tutor-ficha-card">
         <div class="ws-tutor-ficha-head">
             <p class="stc-eyebrow">Ficha del jugador · Tutor</p>

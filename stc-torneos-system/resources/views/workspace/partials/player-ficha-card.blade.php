@@ -170,5 +170,7 @@
         </ul>
     </section>
 
-    <button type="button" class="stc-pcard-download" data-pcard-download>Descargar imagen</button>
+    @if (auth()->user()?->canDownloadPlayerCard())
+        <button type="button" class="stc-pcard-download" data-pcard-download>Descargar imagen</button>
+    @endif
 </article>
