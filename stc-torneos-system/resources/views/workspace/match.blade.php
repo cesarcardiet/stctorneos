@@ -4,7 +4,7 @@
     :subheading="$match->homeTeam?->name.' vs '.$match->awayTeam?->name"
     :category="$category"
     :tournament="$tournament"
-    active="Clasificación"
+    active="Fixture"
 >
     <p class="ws-back">
         <a href="{{ route('workspace.categories.fixture', $category) }}">← Fixture</a>
@@ -15,6 +15,9 @@
     </p>
 
     <section class="ws-ficha">
+        @include('workspace.partials.match-poster')
+
+        @if ($canOperateMatch || $canScheduleMatches)
         <article @class(['ws-card', 'is-live-match' => $match->isLive()])>
             <p class="stc-eyebrow">
                 @if ($match->zoneLabel())
@@ -81,11 +84,10 @@
             @endif
             @if ($canOperateMatch && ! ($sheet?->locked))
                 <button type="button" class="ws-btn" data-ws-open="lineup">Alineación</button>
-            @elseif (auth()->user()?->restrictsToAssignedClub())
-                <button type="button" class="ws-btn" data-ws-open="lineup">Formación</button>
             @endif
             @include('workspace.partials.delete-match-form', ['match' => $match, 'buttonClass' => 'ws-btn danger'])
         </article>
+        @endif
 
         <article class="ws-card">
             <p class="stc-eyebrow">

@@ -600,7 +600,7 @@ class CategoryController extends Controller
             'sheet.events.teamStaff',
             'sheet.events.team.delegation',
             'sheet.incidents',
-            'lineups',
+            'lineups.player',
         ]);
 
         return view('workspace.match', $this->page($category, 'Fixture', [
