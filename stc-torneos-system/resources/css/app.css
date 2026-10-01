@@ -16337,16 +16337,19 @@ button.ws-doc-thumb.is-file {
 
 .mf-score {
     display: grid;
-    grid-template-columns: 1fr auto 1fr;
-    gap: .4rem;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    gap: .5rem;
     align-items: center;
     margin: .7rem 0 .45rem;
 }
 
 .mf-club {
-    display: grid;
-    justify-items: center;
-    gap: .35rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    min-width: 0;
     text-align: center;
 }
 
@@ -16574,21 +16577,33 @@ button.ws-doc-thumb.is-file {
 .mf-staff {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: .5rem;
+    gap: .75rem;
+    align-items: start;
+}
+
+.mf-staff > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .35rem;
+    min-width: 0;
     text-align: center;
 }
 
 .mf-staff img {
-    width: 36px;
-    height: 36px;
+    display: block;
+    width: 42px;
+    height: 42px;
     object-fit: contain;
 }
 
 .mf-staff p {
-    margin: .2rem 0 0;
+    margin: 0;
     color: var(--stc-text);
     font-size: .62rem;
     font-weight: 800;
+    text-align: center;
 }
 
 .mf-staff small {
@@ -16684,9 +16699,22 @@ button.ws-doc-thumb.is-file {
 
 @media (max-width: 800px) {
     .mf-pitches,
-    .mf-lower,
-    .mf-score {
+    .mf-lower {
         grid-template-columns: 1fr;
+    }
+
+    .mf-score {
+        grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+        gap: .35rem;
+        align-items: center;
+    }
+
+    .mf-club strong {
+        max-width: 100%;
+    }
+
+    .mf-result b {
+        font-size: 1.15rem;
     }
 
     .mf-pitch {
@@ -16696,5 +16724,10 @@ button.ws-doc-thumb.is-file {
     .mf-club img {
         width: 40px;
         height: 40px;
+    }
+
+    .mf-subs,
+    .mf-staff {
+        grid-template-columns: 1fr 1fr;
     }
 }
