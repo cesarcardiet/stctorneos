@@ -7809,10 +7809,23 @@ html:has(.stc-body),
 }
 
 .ws-shield-actions {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: .4rem;
+}
+
+.ws-form label.ws-shield-pick-label,
+.ws-shield-actions .ws-btn {
+    width: 100%;
+    min-height: 38px;
+    margin: 0;
     justify-content: center;
-    gap: .45rem;
+    padding: .5rem .65rem;
+    font-size: .72rem;
+    font-weight: 800;
+    line-height: 1.1;
+    white-space: nowrap;
 }
 
 .ws-shield-pick-label {
@@ -7864,6 +7877,53 @@ html:has(.stc-body),
 
 .ws-club-team-add {
     grid-template-columns: minmax(140px, 1fr) minmax(140px, 1fr) minmax(160px, 1.1fr) auto;
+    align-items: end;
+}
+
+.ws-club-team-add input,
+.ws-club-team-add select,
+.ws-club-team-add .ws-btn,
+.ws-clubs-form .ws-form-actions .ws-btn {
+    min-height: 48px;
+    box-sizing: border-box;
+}
+
+.ws-club-team-add .ws-btn,
+.ws-clubs-form .ws-form-actions .ws-btn {
+    padding: 0 1.15rem;
+    font-size: .78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.ws-clubs-identity {
+    display: grid;
+    grid-template-columns: 220px minmax(0, 1fr);
+    gap: 1.25rem 1.5rem;
+    align-items: start;
+}
+
+.ws-clubs-identity .ws-shield-upload {
+    justify-items: center;
+    text-align: center;
+}
+
+.ws-clubs-span {
+    grid-column: 1 / -1;
+}
+
+.ws-clubs-block {
+    display: grid;
+    gap: .75rem;
+    margin-top: 1.2rem;
+    padding-top: 1.15rem;
+    border-top: 1px solid rgba(0, 213, 255, .14);
+}
+
+@media (max-width: 720px) {
+    .ws-clubs-identity {
+        grid-template-columns: 1fr;
+    }
 }
 
 .ws-team-add-shield {
@@ -9071,6 +9131,18 @@ html:has(.stc-body),
     padding: .85rem 1rem;
     color: var(--stc-text);
     background: rgba(2, 8, 20, .7);
+}
+
+.ws-form .ws-file-hidden,
+.ws-form .ws-shield-upload input[type="file"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
 }
 
 .ws-form-actions {
