@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BoardController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\FeedController;
 use App\Http\Controllers\Api\InvitationAuthController;
+use App\Http\Controllers\Api\LiveSyncController;
 use App\Http\Controllers\Api\PasswordResetApiController;
 use App\Http\Controllers\Api\PlayerRosterController;
 use App\Http\Controllers\Api\TutorFichaApiController;
@@ -40,11 +41,16 @@ Route::prefix('v1')->group(function () {
     Route::get('/content', [FeedController::class, 'content']);
     Route::get('/content/{post:slug}', [FeedController::class, 'showContent']);
 
+    // Auto-refresh (polling): marcadores en vivo sin recargar la página
+    Route::get('/live/sync', [LiveSyncController::class, 'matches'])->middleware('throttle:60,1');
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/me', [AuthController::class, 'me']);
         Route::patch('/me', [AuthController::class, 'updateProfile']);
         Route::post('/auth/logout', [AuthController::class, 'logout']);
         Route::get('/notifications', [FeedController::class, 'notifications']);
+        Route::get('/notifications/sync', [LiveSyncController::class, 'notifications'])->middleware('throttle:60,1');
+        Route::post('/notifications/{notification}/read', [LiveSyncController::class, 'markNotificationRead']);
         Route::get('/favorites', [FeedController::class, 'favorites']);
         Route::post('/favorites/teams/{team}', [FeedController::class, 'toggleTeam']);
         Route::post('/favorites/matches/{match}', [FeedController::class, 'toggleMatch']);

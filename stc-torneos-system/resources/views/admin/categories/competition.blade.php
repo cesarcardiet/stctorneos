@@ -33,7 +33,7 @@
     @elseif ($tab === 'rankings')
         @include('admin.categories.partials.competition-rankings')
     @else
-        <section class="ws-standings ws-board admin-competition-board">
+        <section class="ws-standings ws-board admin-competition-board" data-live-sync="1" data-live-category-id="{{ $category->id }}" data-live-tournament-id="{{ $category->tournament_id }}">
             <div class="ws-standings-main">
                 <div class="ws-board-toolbar">
                     <label class="ws-board-phase">
@@ -109,7 +109,7 @@
                                 $roundLabel = \App\Support\CategoryWorkspace::normalizeRound($match->round, $match->stage) ?: 'Sin fecha';
                             @endphp
                             <div class="match-mini-wrap">
-                                <a class="match-mini-card{{ $match->isLive() ? ' is-live' : '' }}" href="{{ route('admin.fixture.show', $match) }}" title="Abrir partido">
+                                <a class="match-mini-card{{ $match->isLive() ? ' is-live' : '' }}" data-live-match-id="{{ $match->id }}" href="{{ route('admin.fixture.show', $match) }}" title="Abrir partido">
                                     <div class="ws-match-card-top">
                                         <x-ws-team-mark
                                             :team="$match->homeTeam"
@@ -117,14 +117,14 @@
                                             :zone="$match->teamGroupLabel($match->homeTeam)"
                                         />
                                         <div class="score-block">
-                                            <span class="score">
+                                            <span class="score" data-live-score="{{ $match->id }}" data-score-format="colon">
                                                 @if ($match->home_score === null && $match->away_score === null)
                                                     - : -
                                                 @else
                                                     {{ $match->home_score ?? 0 }} : {{ $match->away_score ?? 0 }}
                                                 @endif
                                             </span>
-                                            <span class="match-status is-{{ $match->statusTone() }}">{{ $match->statusLabel() }}</span>
+                                            <span class="match-status is-{{ $match->statusTone() }}" data-live-status="{{ $match->id }}">{{ $match->statusLabel() }}</span>
                                             @if ($showPen)
                                                 <span class="ws-match-pen">{{ $pen['home'] }} x {{ $pen['away'] }}</span>
                                             @endif

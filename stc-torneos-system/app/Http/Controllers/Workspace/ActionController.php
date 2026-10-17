@@ -1413,6 +1413,7 @@ class ActionController extends Controller
             'status' => ['required', 'string', 'in:scheduled,live,paused,finished,validated,suspended,rescheduled,reopened'],
         ]);
 
+        $wasLive = $match->status === 'live';
         $match->update([
             'home_score' => $data['home_score'],
             'away_score' => $data['away_score'],
@@ -1429,6 +1430,19 @@ class ActionController extends Controller
 
         if (in_array($match->status, ['live', 'paused', 'scheduled', 'suspended', 'rescheduled', 'reopened'], true)) {
             $this->unlockSheet($match);
+        }
+
+        if (! $wasLive && $match->status === 'live') {
+            app(\App\Services\SystemNotifier::class)->toStaff(
+                'Partido en vivo',
+                $match->title().' quedó en juego.',
+                $match->tournament_id
+            );
+            app(\App\Services\SystemNotifier::class)->toDelegates(
+                'Partido en vivo',
+                $match->title().' quedó en juego.',
+                $match->tournament_id
+            );
         }
 
         $this->audit('update', $match, 'Resultado cargado desde Operación: '.$match->statusLabel());
@@ -1541,8 +1555,10 @@ class ActionController extends Controller
             ]);
         }
 
+        $becameLive = false;
         if (in_array($match->status, ['scheduled', 'rescheduled'], true)) {
             $match->update(['status' => 'live']);
+            $becameLive = true;
         }
 
         $sheet->load(['events', 'match']);
@@ -1552,6 +1568,19 @@ class ActionController extends Controller
             'home_score' => $sheet->home_score,
             'away_score' => $sheet->away_score,
         ]);
+
+        if ($becameLive) {
+            app(\App\Services\SystemNotifier::class)->toStaff(
+                'Partido en vivo',
+                $match->title().' quedó en juego.',
+                $match->tournament_id
+            );
+            app(\App\Services\SystemNotifier::class)->toDelegates(
+                'Partido en vivo',
+                $match->title().' quedó en juego.',
+                $match->tournament_id
+            );
+        }
 
         return back()->with('status', 'Evento cargado en la planilla.');
     }

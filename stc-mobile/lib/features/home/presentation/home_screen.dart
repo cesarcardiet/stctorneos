@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,11 +36,67 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _unreadNotifications = 0;
   bool _loading = true;
   String? _error;
+  Timer? _pollTimer;
+  int _liveRevision = 0;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) => _pollRealtime());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _pollRealtime() async {
+    if (!mounted || _loading) return;
+    final repo = ref.read(catalogRepositoryProvider);
+    try {
+      final sync = await repo.fetchLiveSync(since: _liveRevision, tournamentId: _tournamentId);
+      if (!mounted) return;
+      final revision = sync['revision'];
+      if (revision is int) _liveRevision = revision;
+
+      if (sync['changed'] != false) {
+        final live = (sync['matches'] as List<dynamic>? ?? [])
+            .map((item) => Map<String, dynamic>.from(item as Map))
+            .where((match) => (match['status'] as String?) == 'live')
+            .toList();
+
+        final home = Map<String, dynamic>.from(_homeData ?? {});
+        home['live_matches'] = live;
+
+        final featured = List<Map<String, dynamic>>.from(_featuredMatches);
+        for (var i = 0; i < featured.length; i++) {
+          final id = featured[i]['id'];
+          for (final updated in live) {
+            if (updated['id'] == id) {
+              featured[i] = updated;
+              break;
+            }
+          }
+        }
+
+        setState(() {
+          _homeData = home;
+          _featuredMatches = featured;
+        });
+      }
+    } catch (_) {}
+
+    if (!ref.read(authControllerProvider).isAuthenticated) return;
+    try {
+      final notif = await repo.fetchNotificationsSync();
+      if (!mounted) return;
+      final unread = notif['unread'];
+      if (unread is int && unread != _unreadNotifications) {
+        setState(() => _unreadNotifications = unread);
+      }
+    } catch (_) {}
   }
 
   Future<void> _load() async {

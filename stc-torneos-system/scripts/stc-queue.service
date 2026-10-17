@@ -1,0 +1,15 @@
+[Unit]
+Description=STC Torneos Laravel queue worker
+After=network.target mysqld.service mariadb.service php-fpm.service
+
+[Service]
+User=apache
+Group=apache
+Restart=always
+RestartSec=3
+WorkingDirectory=/var/www/stc-torneos
+ExecStart=/usr/bin/php /var/www/stc-torneos/artisan queue:work database --sleep=1 --tries=3 --max-time=3600
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

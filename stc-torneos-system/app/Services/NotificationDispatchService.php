@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Events\UserNotificationPushed;
 use App\Mail\AppNotificationMail;
 use App\Models\AppNotification;
 use App\Models\AppNotificationRecipient;
@@ -41,6 +42,23 @@ class NotificationDispatchService
             'recipients_count' => $users->count(),
             'read_count' => 0,
         ]);
+
+        $payload = [
+            'id' => $notification->id,
+            'title' => $notification->title,
+            'body' => $notification->body,
+            'sent_at' => $notification->sent_at?->toIso8601String(),
+            'url' => url('/admin/inbox/'.$notification->id),
+        ];
+
+        foreach ($users as $user) {
+            try {
+                broadcast(new UserNotificationPushed($user, $payload));
+            } catch (\Throwable $e) {
+                // La bandeja ya se guardó; si Reverb/websocket no está arriba no bloqueamos el envío.
+                report($e);
+            }
+        }
 
         return $users->count();
     }

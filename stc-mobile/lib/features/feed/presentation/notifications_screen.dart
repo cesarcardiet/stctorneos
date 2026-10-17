@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,11 +21,20 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   List<Map<String, dynamic>> _items = [];
   bool _loading = true;
+  Timer? _pollTimer;
+  int _latestAt = 0;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _pollTimer = Timer.periodic(const Duration(seconds: 8), (_) => _poll());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -39,6 +50,23 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _poll() async {
+    if (!mounted || _loading) return;
+    try {
+      final sync = await ref.read(catalogRepositoryProvider).fetchNotificationsSync();
+      if (!mounted) return;
+      final latest = sync['latest_at'];
+      if (latest is int) {
+        if (latest == _latestAt && _latestAt != 0) return;
+        _latestAt = latest;
+      }
+      final items = (sync['items'] as List<dynamic>? ?? [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .toList();
+      setState(() => _items = items);
+    } catch (_) {}
   }
 
   String _formatDate(String? raw) {
@@ -99,9 +127,24 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                             else
                               ..._items.map((item) {
                                 final read = item['read'] == true;
+                                final id = item['id'] as int?;
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 10),
-                                  child: StcSurfaceCard(
+                                  child: GestureDetector(
+                                    onTap: () async {
+                                      if (read || id == null) return;
+                                      try {
+                                        await ref.read(catalogRepositoryProvider).markNotificationRead(id);
+                                        if (!mounted) return;
+                                        setState(() {
+                                          final idx = _items.indexWhere((row) => row['id'] == id);
+                                          if (idx >= 0) {
+                                            _items[idx] = {..._items[idx], 'read': true};
+                                          }
+                                        });
+                                      } catch (_) {}
+                                    },
+                                    child: StcSurfaceCard(
                                     padding: const EdgeInsets.fromLTRB(15, 13, 15, 13),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -142,6 +185,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                         ),
                                       ],
                                     ),
+                                  ),
                                   ),
                                 );
                               }),

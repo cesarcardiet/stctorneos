@@ -6,6 +6,16 @@
     <title>{{ $title ?? 'STC Torneos' }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('partials.pwa-head')
+    <script>
+        window.StcRealtime = {
+            enabled: @json(config('broadcasting.default') === 'reverb'),
+            key: @json(config('broadcasting.connections.reverb.key')),
+            host: @json(config('broadcasting.connections.reverb.options.host') ?: request()->getHost()),
+            port: @json((int) config('broadcasting.connections.reverb.options.port', 443)),
+            scheme: @json(config('broadcasting.connections.reverb.options.scheme', 'https')),
+            userId: @json(auth()->id()),
+        };
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="stc-body stc-app">
@@ -37,6 +47,7 @@
                 </div>
                 <div class="stc-actions">
                     @include('admin.partials.topbar-search')
+                    @include('admin.partials.notification-bell')
                     @if (($active ?? '') === 'Jugadores')
                         <a href="{{ route('admin.players.export', request()->query()) }}">Exportar</a>
                     @endif

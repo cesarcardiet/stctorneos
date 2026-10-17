@@ -86,19 +86,26 @@
     </section>
 
     <section class="dashboard-grid">
-        <article class="stc-card match-card">
+        <article class="stc-card match-card" data-live-sync="1">
             <header>
                 <h3>Partidos en vivo</h3>
+                <small class="live-auto-hint">Actualización automática</small>
             </header>
+            <div
+                data-live-list
+                data-can-fixture="{{ $canFixture ? '1' : '0' }}"
+                data-fixture-base="{{ url('/admin/fixture') }}"
+                data-empty-html='<p class="schedule-empty">No hay partidos en vivo ahora.</p>'
+            >
             @forelse ($liveMatches as $match)
                 @if ($canFixture)
-                    <a class="match-row" href="{{ route('admin.fixture.show', $match) }}">
+                    <a class="match-row is-live" data-live-match-id="{{ $match->id }}" href="{{ route('admin.fixture.show', $match) }}">
                 @else
-                    <div class="match-row">
+                    <div class="match-row is-live" data-live-match-id="{{ $match->id }}">
                 @endif
                     <span>{{ $match->homeTeam?->name ?? 'Local' }} vs {{ $match->awayTeam?->name ?? 'Visitante' }}</span>
-                    <strong>{{ $match->home_score }} - {{ $match->away_score }}</strong>
-                    <small>{{ $match->minute }}</small>
+                    <strong data-live-score="{{ $match->id }}">{{ $match->home_score }} - {{ $match->away_score }}</strong>
+                    <small data-live-minute="{{ $match->id }}">{{ $match->minute }}</small>
                 @if ($canFixture)
                     </a>
                 @else
@@ -107,6 +114,7 @@
             @empty
                 <p class="schedule-empty">No hay partidos en vivo ahora.</p>
             @endforelse
+            </div>
         </article>
 
         <article class="stc-card alerts-card">

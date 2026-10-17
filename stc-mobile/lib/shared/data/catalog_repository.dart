@@ -299,6 +299,33 @@ class CatalogRepository {
         .toList();
   }
 
+  /// Lightweight live scores snapshot for auto-refresh (polling).
+  Future<Map<String, dynamic>> fetchLiveSync({int? since, int? tournamentId}) async {
+    final params = <String, dynamic>{};
+    if (since != null) params['since'] = since;
+    if (tournamentId != null) params['tournament_id'] = tournamentId;
+    final json = await _client.getJson('/live/sync', query: params);
+    final response = ApiResponse<Map<String, dynamic>>.fromJson(
+      json,
+      (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return response.data ?? {};
+  }
+
+  /// Unread count + latest notifications for badge auto-refresh.
+  Future<Map<String, dynamic>> fetchNotificationsSync() async {
+    final json = await _client.getJson('/notifications/sync');
+    final response = ApiResponse<Map<String, dynamic>>.fromJson(
+      json,
+      (data) => Map<String, dynamic>.from(data as Map),
+    );
+    return response.data ?? {};
+  }
+
+  Future<void> markNotificationRead(int notificationId) async {
+    await _client.postJson('/notifications/$notificationId/read');
+  }
+
   Future<Map<String, dynamic>> fetchFavorites() async {
     final json = await _client.getJson('/favorites');
     final response = ApiResponse<Map<String, dynamic>>.fromJson(

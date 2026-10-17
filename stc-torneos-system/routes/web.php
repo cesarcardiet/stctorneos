@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\InboxController;
 use App\Http\Controllers\Admin\SearchController;
 use App\Http\Controllers\Admin\DelegationController;
 use App\Http\Controllers\Admin\DocumentController;
@@ -177,6 +178,13 @@ Route::get('/plantel/{token}', [RosterShareController::class, 'show'])->name('pl
 Route::post('/plantel/{token}', [RosterShareController::class, 'store'])->name('plantel.store');
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'admin.web', 'permission:dashboard.view'])->name('dashboard');
+
+Route::middleware(['auth', 'admin.web'])->prefix('admin/inbox')->name('admin.inbox.')->group(function () {
+    Route::get('/', [InboxController::class, 'feed'])->name('feed');
+    Route::post('/read-all', [InboxController::class, 'markAllRead'])->name('read-all');
+    Route::post('/{notification}/read', [InboxController::class, 'markRead'])->name('read');
+    Route::get('/{notification}', [InboxController::class, 'show'])->name('show');
+});
 
 Route::middleware(['auth', 'permission:dashboard.view'])->prefix('operacion')->name('workspace.')->group(function () {
     Route::get('/salud', function () {

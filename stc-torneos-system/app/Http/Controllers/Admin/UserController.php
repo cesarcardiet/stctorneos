@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\UserInvitationMail;
 use App\Models\AuditLog;
 use App\Models\Delegation;
 use App\Models\Invitation;
@@ -10,6 +11,7 @@ use App\Models\Role;
 use App\Models\Tournament;
 use App\Models\User;
 use App\Support\QrCode;
+use App\Support\StcMail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -97,7 +99,7 @@ class UserController extends Controller
 
         $this->syncRoles($user, $request);
 
-        Invitation::create([
+        $invitation = Invitation::create([
             'name' => $user->name,
             'email' => $user->email,
             'role_id' => $user->primaryRole()?->id,
@@ -109,11 +111,17 @@ class UserController extends Controller
             'expires_at' => now()->addDays(7),
         ]);
 
+        $mailSent = StcMail::send(new UserInvitationMail($invitation), $user->email);
+
         $this->audit($user, 'create', 'Usuario creado: '.$user->name);
+
+        $status = $mailSent
+            ? 'Usuario creado. Se envió la invitación por correo para activar el acceso.'
+            : 'Usuario creado. Se generó la invitación, pero el correo no se pudo enviar.';
 
         return redirect()
             ->route('admin.users.show', $user)
-            ->with('status', 'Usuario creado. Se generó la invitación para activar el acceso al Admin Web.');
+            ->with('status', $status);
     }
 
     public function show(User $user): View

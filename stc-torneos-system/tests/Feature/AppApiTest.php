@@ -18,10 +18,11 @@ class AppApiTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $category = Category::where('name', 'Sub 12 Masculino')->firstOrFail();
 
+        // Mesa demo queda activa en el seeder (puede operar planilla).
         $this->postJson('/api/v1/auth/login', [
             'email' => 'mesa@stctorneos.demo',
             'password' => 'stcdemo',
-        ])->assertStatus(403);
+        ])->assertOk();
 
         $login = $this->postJson('/api/v1/auth/login', [
             'email' => 'delegado@stctorneos.demo',

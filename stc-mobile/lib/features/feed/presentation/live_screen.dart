@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/navigation/stc_navigation.dart';
@@ -17,11 +19,20 @@ class LiveScreen extends ConsumerStatefulWidget {
 class _LiveScreenState extends ConsumerState<LiveScreen> {
   List<Map<String, dynamic>> _liveMatches = [];
   bool _loading = true;
+  Timer? _pollTimer;
+  int _revision = 0;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _pollTimer = Timer.periodic(const Duration(seconds: 5), (_) => _poll());
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -52,6 +63,24 @@ class _LiveScreenState extends ConsumerState<LiveScreen> {
     } catch (_) {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _poll() async {
+    if (!mounted || _loading) return;
+    try {
+      final sync = await ref.read(catalogRepositoryProvider).fetchLiveSync(since: _revision);
+      if (!mounted) return;
+      final revision = sync['revision'];
+      if (revision is int) _revision = revision;
+      if (sync['changed'] == false) return;
+
+      final matches = (sync['matches'] as List<dynamic>? ?? [])
+          .map((item) => Map<String, dynamic>.from(item as Map))
+          .where((match) => (match['status'] as String?) == 'live')
+          .toList();
+
+      setState(() => _liveMatches = matches);
+    } catch (_) {}
   }
 
   @override
