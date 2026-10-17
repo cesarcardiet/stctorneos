@@ -16,7 +16,12 @@ class InboxController extends Controller
         $user = $request->user();
 
         $items = AppNotification::query()
-            ->with(['recipients' => fn ($query) => $query->where('user_id', $user->id)])
+            ->with([
+                'tournament',
+                'post.category',
+                'author',
+                'recipients' => fn ($query) => $query->where('user_id', $user->id),
+            ])
             ->where('status', 'sent')
             ->where(function ($query) use ($user) {
                 $query
@@ -29,14 +34,26 @@ class InboxController extends Controller
             ->get()
             ->map(function (AppNotification $notification) {
                 $mine = $notification->recipients->first();
+                $tournamentName = $notification->tournament?->name;
+                $categoryName = $notification->post?->category?->name;
+                $contextParts = array_values(array_filter([
+                    $tournamentName,
+                    $categoryName,
+                    $notification->audienceLabel(),
+                ]));
 
                 return [
                     'id' => $notification->id,
                     'title' => $notification->title,
                     'body' => $notification->body,
                     'audience' => $notification->audienceLabel(),
+                    'channel' => $notification->channelLabel(),
+                    'tournament' => $tournamentName,
+                    'category' => $categoryName,
+                    'context' => implode(' · ', $contextParts) ?: 'Aviso general',
+                    'author' => $notification->author?->name,
                     'sent_at' => $notification->sent_at?->toIso8601String(),
-                    'sent_label' => $notification->sent_at?->diffForHumans() ?? '',
+                    'sent_label' => $notification->sent_at?->locale('es')->diffForHumans() ?? '',
                     'read' => $mine?->status === 'read',
                     'url' => route('workspace.inbox.show', $notification),
                 ];
@@ -69,6 +86,8 @@ class InboxController extends Controller
             $recipient->update(['status' => 'read', 'read_at' => now()]);
             $notification->increment('read_count');
         }
+
+        $notification->loadMissing(['tournament', 'post.category', 'author']);
 
         return view('admin.inbox.show', [
             'notification' => $notification,
