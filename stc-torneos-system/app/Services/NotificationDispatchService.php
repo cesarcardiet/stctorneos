@@ -43,10 +43,20 @@ class NotificationDispatchService
             'read_count' => 0,
         ]);
 
+        $notification->loadMissing(['tournament', 'post.category']);
+        $tournamentName = $notification->tournament?->name;
+        $categoryName = $notification->post?->category?->name;
         $payload = [
             'id' => $notification->id,
             'title' => $notification->title,
             'body' => $notification->body,
+            'tournament' => $tournamentName,
+            'category' => $categoryName,
+            'context' => implode(' · ', array_values(array_filter([
+                $tournamentName,
+                $categoryName,
+                $notification->audienceLabel(),
+            ]))) ?: 'Aviso general',
             'sent_at' => $notification->sent_at?->toIso8601String(),
             'url' => url('/operacion/inbox/'.$notification->id),
         ];
