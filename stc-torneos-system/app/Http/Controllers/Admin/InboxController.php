@@ -38,7 +38,7 @@ class InboxController extends Controller
                     'sent_at' => $notification->sent_at?->toIso8601String(),
                     'sent_label' => $notification->sent_at?->diffForHumans() ?? '',
                     'read' => $mine?->status === 'read',
-                    'url' => route('admin.inbox.show', $notification),
+                    'url' => route('workspace.inbox.show', $notification),
                 ];
             });
 

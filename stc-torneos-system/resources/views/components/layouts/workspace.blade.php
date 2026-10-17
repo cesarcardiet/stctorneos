@@ -15,6 +15,16 @@
     <title>{{ $title }}</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @include('partials.pwa-head')
+    <script>
+        window.StcRealtime = {
+            enabled: @json(config('broadcasting.default') === 'reverb'),
+            key: @json(config('broadcasting.connections.reverb.key')),
+            host: @json(config('broadcasting.connections.reverb.options.host') ?: request()->getHost()),
+            port: @json((int) config('broadcasting.connections.reverb.options.port', 443)),
+            scheme: @json(config('broadcasting.connections.reverb.options.scheme', 'https')),
+            userId: @json(auth()->id()),
+        };
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
 </head>
@@ -34,9 +44,12 @@
                     <h1>{{ $heading ?? $title }}</h1>
                     <span>{{ $subheading ?? 'Operá el torneo desde la categoría.' }}</span>
                 </div>
-                @if (isset($actions) && ! $actions->isEmpty())
-                    <div class="stc-actions">{{ $actions }}</div>
-                @endif
+                <div class="stc-actions ws-topbar-actions">
+                    @include('admin.partials.notification-bell')
+                    @if (isset($actions) && ! $actions->isEmpty())
+                        {{ $actions }}
+                    @endif
+                </div>
             </header>
 
             @include('workspace.partials.breadcrumb', [

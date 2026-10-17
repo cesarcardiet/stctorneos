@@ -11,7 +11,7 @@
     const badge = root.querySelector('[data-notif-badge]');
     const markAll = root.querySelector('[data-notif-mark-all]');
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content || '';
-    const feedUrl = '/admin/inbox';
+    const feedUrl = '/operacion/inbox';
     const userId = root.dataset.userId;
 
     let open = false;

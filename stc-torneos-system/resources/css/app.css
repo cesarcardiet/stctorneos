@@ -1450,6 +1450,53 @@ a.schedule-row:hover {
     font-size: 0.85rem;
 }
 
+/* Campanita en Operación (tema oscuro) */
+.ws-body .ws-topbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-left: auto;
+}
+.ws-body .stc-notif-bell__btn {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(125, 211, 252, 0.35);
+    color: #7dd3fc;
+}
+.ws-body .stc-notif-bell__btn:hover {
+    background: rgba(125, 211, 252, 0.16);
+}
+.ws-body .stc-notif-bell__panel {
+    background: #0f1b2d;
+    border-color: rgba(125, 211, 252, 0.25);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+}
+.ws-body .stc-notif-bell__head,
+.ws-body .stc-notif-bell__foot {
+    background: #132338;
+    border-color: rgba(125, 211, 252, 0.15);
+    color: #e2e8f0;
+}
+.ws-body .stc-notif-bell__item {
+    border-color: rgba(125, 211, 252, 0.12);
+}
+.ws-body .stc-notif-bell__item:hover,
+.ws-body .stc-notif-bell__item.is-unread {
+    background: rgba(14, 116, 144, 0.22);
+}
+.ws-body .stc-notif-bell__item strong {
+    color: #f8fafc;
+}
+.ws-body .stc-notif-bell__item span {
+    color: #94a3b8;
+}
+.ws-body .stc-notif-bell__empty {
+    color: #94a3b8;
+}
+.ws-body .stc-notif-bell__mark,
+.ws-body .stc-notif-bell__foot a {
+    color: #7dd3fc;
+}
+
 .stc-card h3 {
     font-size: 1rem;
 }

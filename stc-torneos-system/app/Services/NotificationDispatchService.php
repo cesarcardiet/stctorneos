@@ -48,7 +48,7 @@ class NotificationDispatchService
             'title' => $notification->title,
             'body' => $notification->body,
             'sent_at' => $notification->sent_at?->toIso8601String(),
-            'url' => url('/admin/inbox/'.$notification->id),
+            'url' => url('/operacion/inbox/'.$notification->id),
         ];
 
         foreach ($users as $user) {

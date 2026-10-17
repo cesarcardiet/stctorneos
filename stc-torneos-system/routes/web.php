@@ -179,7 +179,8 @@ Route::post('/plantel/{token}', [RosterShareController::class, 'store'])->name('
 
 Route::get('/dashboard', DashboardController::class)->middleware(['auth', 'admin.web', 'permission:dashboard.view'])->name('dashboard');
 
-Route::middleware(['auth', 'admin.web'])->prefix('admin/inbox')->name('admin.inbox.')->group(function () {
+// Bandeja de notificaciones (Operación + Admin): accesible a cualquier usuario autenticado
+Route::middleware(['auth'])->prefix('operacion/inbox')->name('workspace.inbox.')->group(function () {
     Route::get('/', [InboxController::class, 'feed'])->name('feed');
     Route::post('/read-all', [InboxController::class, 'markAllRead'])->name('read-all');
     Route::post('/{notification}/read', [InboxController::class, 'markRead'])->name('read');

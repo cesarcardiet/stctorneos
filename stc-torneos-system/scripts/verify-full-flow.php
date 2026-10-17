@@ -197,7 +197,7 @@ $roles = [
         '/admin/usuarios' => null,
         '/admin/roles' => null,
         '/admin/auditoria' => null,
-        '/admin/inbox' => null,
+        '/operacion/inbox' => null,
         '/operacion' => null,
     ]],
     ['email' => 'lucia@stctorneos.demo', 'password' => 'stcdemo', 'label' => 'admin-torneo', 'paths' => [
@@ -246,7 +246,7 @@ foreach ($roles as $role) {
 
     // Inbox JSON for admin-capable roles
     if (in_array($role['label'], ['super-admin', 'admin-torneo', 'coordinador'], true)) {
-        $inbox = expectApi("{$role['label']} inbox json", '/admin/inbox');
+        $inbox = expectApi("{$role['label']} inbox json", '/operacion/inbox');
         if (($inbox['json']['ok'] ?? false) !== true && $inbox['code'] === 200) {
             // still ok if structure differs
         }
@@ -305,7 +305,7 @@ if (loginAs('admin@stctorneos.demo', 'stcdemo')) {
                 '_token' => $csrf,
             ], true);
             note('enviar notificación '.$id, in_array($send['code'], [200, 302], true), 'HTTP '.$send['code']);
-            $inbox = expectApi('inbox tras envío', '/admin/inbox');
+            $inbox = expectApi('inbox tras envío', '/operacion/inbox');
             $unread = $inbox['json']['data']['unread'] ?? null;
             note('inbox tiene datos', $inbox['code'] === 200, 'unread='.json_encode($unread));
         } else {
