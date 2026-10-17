@@ -44,7 +44,6 @@ stc-mobile/**/Pods/
 
 # IDE
 .idea/
-.vscode/
 .DS_Store
 Thumbs.db
 *.tgz
@@ -52,3 +51,5 @@ Thumbs.db
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
+config.bat
+node_modules

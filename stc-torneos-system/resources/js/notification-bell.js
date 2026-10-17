@@ -33,6 +33,7 @@
 
         list.innerHTML = items.map((item) => `
             <a class="stc-notif-bell__item${item.read ? '' : ' is-unread'}" href="${item.url || '#'}" data-notif-id="${item.id}">
+                <em class="stc-notif-bell__context">${escapeHtml(item.context || item.tournament || 'Aviso general')}</em>
                 <strong>${escapeHtml(item.title || 'Aviso')}</strong>
                 <span>${escapeHtml(item.body || '')}</span>
                 <small>${escapeHtml(item.sent_label || '')}</small>
@@ -69,6 +70,9 @@
                 id: payload.id,
                 title: payload.title,
                 body: payload.body,
+                context: payload.context || payload.tournament || 'Aviso general',
+                tournament: payload.tournament,
+                category: payload.category,
                 sent_at: payload.sent_at,
                 sent_label: 'Ahora',
                 read: false,
